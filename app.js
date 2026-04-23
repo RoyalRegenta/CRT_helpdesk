@@ -190,20 +190,183 @@ const app = {
     if (!res.ok) return alert("Ticket not found.");
     
     app.currentTicketId = res.ticket.TicketID;
+    app._ticketsCache[app.currentTicketId] = res.ticket;
+    
     document.getElementById(`${pfx}_ticketDetails`)?.classList.remove('hidden');
     document.getElementById(`${pfx}_dispId`).innerText = res.ticket.TicketID;
     document.getElementById(`${pfx}_dispStatus`).innerText = res.ticket.Status;
     document.getElementById(`${pfx}_dispStatus`).className = `status-badge status-${res.ticket.Status.replace(/ /g, '-')}`;
+
+    // Render details
+    const details = `${res.ticket.HotelName} | ${res.ticket.Designation} (${res.ticket.Department})`;
+    const detailsEl = document.getElementById(`${pfx}_dispDetails`);
+    if (detailsEl) detailsEl.innerText = details;
+
+    const updatedEl = document.getElementById(`${pfx}_dispUpdated`);
+    if (updatedEl) updatedEl.innerText = `Updated: ${res.ticket.UpdateDaT || res.ticket.TimeStamps}`;
+
+    // Specific role populating
+    if (pfx === 'hr') {
+      const strip = document.getElementById('hr_positionStrip');
+      if (strip) strip.innerHTML = `
+        <div class="info-chip"><div class="info-chip-label">Hotel</div><div class="info-chip-val">${res.ticket.HotelName}</div></div>
+        <div class="info-chip"><div class="info-chip-label">Positions</div><div class="info-chip-val">${res.ticket.NumPositions}</div></div>
+      `;
+      let hrFb = {}; try { hrFb = JSON.parse(res.ticket.HrFeedBack || '{}'); } catch(e){}
+      app.setVal('hr_feedbackDecision', hrFb.decision || '');
+      app.setVal('hr_feedbackRemarks', hrFb.remarks || '');
+    }
+
+    if (pfx === 'crt') {
+      app.setVal('crt_edit_hotelName', res.ticket.HotelName);
+      app.setVal('crt_edit_stateName', res.ticket.State);
+      app.setVal('crt_edit_hrName', res.ticket.HrName);
+      app.setVal('crt_edit_hrContact', res.ticket.HrContact);
+      app.setVal('crt_edit_hrEmail', res.ticket.HrEmail);
+      app.setVal('crt_edit_department', res.ticket.Department);
+      app.populateDesignations('crt_edit_department', 'crt_edit_designation');
+      app.setVal('crt_edit_designation', res.ticket.Designation);
+      app.setVal('crt_edit_numPositions', res.ticket.NumPositions);
+      app.setVal('crt_edit_experience', res.ticket.Experience);
+    }
+    
+    app.renderResumes(pfx, res.ticket.Resumes);
   },
 
-  // Mock implementation for UI interactions requested in index.html
-  saveFeedback: () => alert("Feedback saved!"),
-  crtSaveDetails: () => alert("Details updated!"),
-  addResumeFile: () => alert("Resume file uploaded!"),
-  addResumeLink: () => alert("Resume link added!"),
-  closeTicket: () => alert("Ticket closed!"),
-  adminCreateUser: () => alert("User created!"),
-  adminClearDataRange: () => alert("Data cleared!")
+  renderResumes: (pfx, resumesStr) => {
+    const listEl = document.getElementById(`${pfx}_resumeList`);
+    if (!listEl) return;
+    let resumes = [];
+    try { resumes = JSON.parse(resumesStr || '[]'); } catch(e){}
+
+    if (!resumes.length) {
+      listEl.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">No resumes uploaded.</span>`;
+      return;
+    }
+
+    listEl.innerHTML = resumes.map((r, i) => {
+      const isFile = r.type === 'file';
+      const name = typeof r === 'string' ? `Link ${i+1}` : r.name;
+      const url = isFile ? `${API_BASE}download?fileId=${r.fileId}` : (r.url || r);
+      return `
+        <div class="resume-item">
+          <span style="font-size:13px;">${isFile ? '📄' : '🔗'} ${name}</span>
+          <a href="${url}" target="_blank" class="btn btn-secondary" style="padding:4px 12px; font-size:11px;">View</a>
+        </div>
+      `;
+    }).join('');
+  },
+
+  // ─── ACTIONS ───
+  saveFeedback: async (pfx) => {
+    const decision = app.getVal(`${pfx}_feedbackDecision`);
+    const remarks = app.getVal(`${pfx}_feedbackRemarks`);
+    if (!remarks) return alert("Remarks are mandatory");
+
+    const t = app._ticketsCache[app.currentTicketId];
+    if (!t) return;
+
+    if (pfx === 'hr') t.HrFeedBack = JSON.stringify({ decision, remarks });
+    if (pfx === 'fh') t.FhFeedBack = JSON.stringify({ decision, remarks });
+    if (decision) t.Status = 'Interview Completed';
+
+    app.showLoading('Saving...');
+    const res = await app.api('update-ticket', t);
+    app.hideLoading();
+    if (res.ok) alert("Feedback saved!");
+    else alert("Failed to save feedback.");
+  },
+
+  crtSaveDetails: async () => {
+    const t = app._ticketsCache[app.currentTicketId];
+    if (!t) return;
+    
+    t.HotelName = app.getVal('crt_edit_hotelName');
+    t.State = app.getVal('crt_edit_stateName');
+    t.HrName = app.getVal('crt_edit_hrName');
+    t.HrContact = app.getVal('crt_edit_hrContact');
+    t.HrEmail = app.getVal('crt_edit_hrEmail');
+    t.Department = app.getVal('crt_edit_department');
+    t.Designation = app.getVal('crt_edit_designation');
+    t.NumPositions = app.getVal('crt_edit_numPositions');
+    t.Experience = app.getVal('crt_edit_experience');
+
+    app.showLoading('Updating...');
+    const res = await app.api('update-ticket', t);
+    app.hideLoading();
+    if (res.ok) alert("Details updated!");
+    else alert("Update failed.");
+  },
+
+  addResumeFile: async () => {
+    const file = document.getElementById('crt_newResumeFile')?.files[0];
+    if (!file) return alert("Select a file");
+
+    app.showLoading('Uploading...');
+    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
+    const upRes = await app.api('upload-resume', { fileName: file.name, fileData: base64 });
+    
+    if (!upRes.ok) {
+      app.hideLoading();
+      return alert("Upload failed: " + upRes.error);
+    }
+
+    const t = app._ticketsCache[app.currentTicketId];
+    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+    resumes.push({ type: 'file', name: file.name, fileId: upRes.fileId });
+    t.Resumes = JSON.stringify(resumes);
+    t.Status = 'Resumes Uploaded';
+
+    const saveRes = await app.api('update-ticket', t);
+    app.hideLoading();
+    if (saveRes.ok) {
+      app.searchTicket('crt-team'); // Reload view
+    } else {
+      alert("Failed to link resume to ticket");
+    }
+  },
+
+  addResumeLink: async () => {
+    const link = app.getVal('crt_newResumeLink');
+    if (!link) return alert("Paste a link");
+
+    const t = app._ticketsCache[app.currentTicketId];
+    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+    resumes.push({ type: 'link', name: link, url: link });
+    t.Resumes = JSON.stringify(resumes);
+    t.Status = 'Resumes Uploaded';
+
+    app.showLoading('Saving...');
+    const saveRes = await app.api('update-ticket', t);
+    app.hideLoading();
+    
+    if (saveRes.ok) {
+      app.setVal('crt_newResumeLink', '');
+      app.searchTicket('crt-team');
+    }
+  },
+
+  closeTicket: async () => {
+    const action = app.getVal('crt_closureAction');
+    const status = app.getVal('crt_statusOverride');
+    const t = app._ticketsCache[app.currentTicketId];
+    if (!t) return;
+
+    if (action) t.ClosureStatus = action;
+    if (status) t.Status = status;
+    if (action === 'Position Filled' || action === 'Cancelled') t.Status = 'Closed';
+
+    app.showLoading('Closing...');
+    const res = await app.api('update-ticket', t);
+    app.hideLoading();
+    if (res.ok) {
+      alert("Ticket updated!");
+      app.searchTicket('crt-team');
+    }
+  },
+
+  adminCreateUser: () => alert("User creation available via Catalyst Console natively."),
+  adminClearDataRange: () => alert("Maintenance tasks available via Catalyst Console natively.")
 };
 
 window.onload = () => {
