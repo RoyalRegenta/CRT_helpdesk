@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Recruitment Dashboard</title>
+    <link rel="stylesheet" href="hr-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2" style="background-color:#1a0a0e;"></div> <!-- Dimmer background for dashboard -->
+    </div>
+
+    <header class="navbar" style="background: rgba(26,10,14,0.95);">
+        <div class="container" style="max-width: 1400px;">
+            <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="logo.jpg" alt="Royal Orchid Logo" style="height: 48px;">
+                <div>
+                    <div>HR Recruitment Dashboard</div>
+                    <span class="logo-subtitle" id="dashboardRoleSubtitle">Loading Role...</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span class="badge" id="userRoleBadge" style="background: var(--gradient); color: white;">Role</span>
+                <span id="userName" style="color: var(--text); font-weight: 600; font-size: 0.9rem;">Admin</span>
+                <button id="logoutBtn" class="btn btn-primary btn-small" style="background: transparent; border: 1px solid var(--border); box-shadow: none;">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container" style="max-width: 1400px; padding-top: 2rem; padding-bottom: 4rem;">
+        
+        <!-- Stats Row -->
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <p>Total Requests</p>
+                <h3 id="statTotal">0</h3>
+            </div>
+            <div class="stat-card">
+                <p>Pending / Active</p>
+                <h3 id="statActive">0</h3>
+            </div>
+            <div class="stat-card">
+                <p>Closed</p>
+                <h3 id="statClosed">0</h3>
+            </div>
+            <div class="stat-card" style="border-color: rgba(220,38,38,0.5);">
+                <p style="color: #fca5a5;">Critical Urgency</p>
+                <h3 id="statCritical" style="color: #fca5a5;">0</h3>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar card glass" style="padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h2 style="font-size: 1.25rem;">Recruitment Requests</h2>
+            <div class="filters">
+                <input type="text" id="searchInput" placeholder="Search ID, Hotel, Position..." style="padding: 0.5rem 1rem; border-radius: 6px;">
+                
+                <select id="filterStatus" style="padding: 0.5rem 1rem; border-radius: 6px;">
+                    <option value="All">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Resumes Shared">Resumes Shared</option>
+                    <option value="Interview In Progress">Interview In Progress</option>
+                    <option value="Remarks Submitted">Remarks Submitted</option>
+                    <option value="Closed">Closed</option>
+                </select>
+
+                <select id="filterUrgency" style="padding: 0.5rem 1rem; border-radius: 6px;">
+                    <option value="All">All Urgencies</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Critical">Critical</option>
+                </select>
+
+                <select id="filterHotel" style="padding: 0.5rem 1rem; border-radius: 6px;">
+                    <option value="All">All Hotels</option>
+                    <!-- Options populated by JS for Corp HR / Corp Office -->
+                </select>
+
+                <button id="refreshBtn" class="btn btn-primary btn-small">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table id="ticketsTable">
+                <thead>
+                    <tr>
+                        <th>Ticket ID</th>
+                        <th>Hotel</th>
+                        <th>Position</th>
+                        <th>Vacancies</th>
+                        <th>Unit HR</th>
+                        <th>Urgency</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsBody">
+                    <tr><td colspan="9" style="text-align:center;">Loading tickets...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal: Share Resumes (Corp HR) -->
+    <div id="modalShareResumes" class="modal-overlay hidden">
+        <div class="modal">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalShareResumesTitle">Share Resumes — RHR-XXXX</h2>
+            <div class="form-group mb-large">
+                <label>Resume Links (one per line or comma-separated)</label>
+                <textarea id="valResumeLinks" rows="4" placeholder="https://drive.google.com/..."></textarea>
+            </div>
+            <div class="form-group mb-large">
+                <label>Corporate HR Remarks / Notes</label>
+                <textarea id="valCorpHRRemarks" rows="3" placeholder="Any notes for the GM..."></textarea>
+            </div>
+            <button id="btnSubmitShareResumes" class="btn btn-primary" style="width: 100%;">✅ Mark Resumes Shared</button>
+        </div>
+    </div>
+
+    <!-- Modal: Submit GM Remarks -->
+    <div id="modalGMRemarks" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 700px;">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalGMRemarksTitle">Interview Remarks — RHR-XXXX</h2>
+            <div class="form-group mb-large">
+                <label>GM Name (Submitting)</label>
+                <input type="text" id="valGMName" readonly style="background: #e2e8f0; color: #475569;">
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--text);">Candidate Decisions</h4>
+                <div id="candidatesContainer">
+                    <!-- Dynamic rows here -->
+                </div>
+                <button type="button" id="btnAddCandidate" class="btn btn-small" style="background: transparent; border: 1px dashed var(--border); color: var(--text); width: 100%; margin-top: 1rem;">+ Add Candidate</button>
+            </div>
+
+            <div class="form-group mb-large">
+                <label>Overall GM Remarks</label>
+                <textarea id="valGMOverallRemarks" rows="3" placeholder="Summary of the interviews..."></textarea>
+            </div>
+            <button id="btnSubmitGMRemarks" class="btn btn-primary" style="width: 100%;">✅ Submit Interview Remarks</button>
+        </div>
+    </div>
+
+    <!-- Modal: Close Ticket (Corp Office) -->
+    <div id="modalCloseTicket" class="modal-overlay hidden">
+        <div class="modal">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalCloseTicketTitle">Close Ticket — RHR-XXXX</h2>
+            <p style="color: var(--muted); margin-bottom: 1.5rem;">Are you sure you want to close this ticket? This action cannot be undone easily.</p>
+            <div class="form-group mb-large">
+                <label>Closing Remarks (Optional)</label>
+                <textarea id="valClosingRemarks" rows="3" placeholder="Ticket closed successfully..."></textarea>
+            </div>
+            <button id="btnSubmitCloseTicket" class="btn btn-primary" style="width: 100%; background: #059669; box-shadow: none;">🔒 Close Ticket</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <div class="toast-icon">i</div>
+        <div class="toast-content">
+            <div class="toast-title" id="toastTitle">Notification</div>
+            <div class="toast-msg" id="toastMessage">Something happened.</div>
+        </div>
+    </div>
+
+    <script src="hr-app.js"></script>
+</body>
+</html>

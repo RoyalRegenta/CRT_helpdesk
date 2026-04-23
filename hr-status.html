@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Request | HR Recruitment Portal</title>
+    <link rel="stylesheet" href="hr-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <header class="navbar">
+        <div class="container">
+            <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="logo.jpg" alt="Royal Orchid Logo" style="height: 48px;">
+                <div>
+                    <div>Royal Orchid Hotels</div>
+                    <span class="logo-subtitle">HR Recruitment Portal</span>
+                </div>
+            </div>
+            <nav style="display: flex; gap: 10px;">
+                <a href="hr-request.html" class="nav-link">Submit Request</a>
+                <a href="hr-status.html" class="nav-link active">Track Status</a>
+                <a href="hr-admin-login.html" class="nav-link" style="color:#c0395a; font-weight:700;">Admin ↗</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="hero">
+        <div class="container">
+            <div class="card glass" style="max-width: 600px; margin: 0 auto;">
+                <h2 style="margin-bottom: 1rem; color: var(--text);">Track Your Recruitment Request</h2>
+                <div class="form-group mb-large">
+                    <input type="text" id="ticketIdSearch" placeholder="Enter your Ticket ID e.g. RHR-2024-0001" style="font-size: 1.1rem; padding: 1rem;">
+                </div>
+                <button id="trackBtn" class="btn btn-primary" style="width: 100%;">
+                    Track Status
+                </button>
+            </div>
+
+            <!-- Tracker Display (Hidden initially) -->
+            <div class="card glass hidden" id="statusResultCard" style="max-width: 800px; margin: 2rem auto; padding: 2rem;">
+                <h3 style="color: var(--text); margin-bottom: 1rem;">Ticket <span id="resTicketId" class="text-gradient"></span></h3>
+                
+                <div class="timeline" id="timeline">
+                    <!-- Steps will be injected dynamically -->
+                </div>
+
+                <div style="background: rgba(30,10,15,0.5); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); margin-top: 2rem; text-align: left;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <span style="color:var(--muted); font-size:0.8rem; text-transform:uppercase;">Hotel</span><br>
+                            <strong id="resHotel" style="color:var(--text);"></strong>
+                        </div>
+                        <div>
+                            <span style="color:var(--muted); font-size:0.8rem; text-transform:uppercase;">Position</span><br>
+                            <strong id="resPosition" style="color:var(--text);"></strong>
+                        </div>
+                        <div>
+                            <span style="color:var(--muted); font-size:0.8rem; text-transform:uppercase;">Vacancies</span><br>
+                            <strong id="resVacancies" style="color:var(--text);"></strong>
+                        </div>
+                        <div>
+                            <span style="color:var(--muted); font-size:0.8rem; text-transform:uppercase;">Urgency</span><br>
+                            <span id="resUrgency"></span>
+                        </div>
+                        <div>
+                            <span style="color:var(--muted); font-size:0.8rem; text-transform:uppercase;">Submitted By</span><br>
+                            <strong id="resUnitHR" style="color:var(--text);"></strong>
+                        </div>
+                        <div>
+                            <span style="color:var(--muted); font-size:0.8rem; text-transform:uppercase;">Current Status</span><br>
+                            <span id="resStatusBadge"></span>
+                        </div>
+                    </div>
+                    
+                    <div id="resEvents" style="border-top: 1px solid var(--border); padding-top: 1rem;">
+                        <!-- Event notifications like "Resumes Shared" appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <a href="hr-request.html" style="color: var(--muted); text-decoration: none;">&larr; Back to Submit a Request</a>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast hidden">
+        <div class="toast-icon">i</div>
+        <div class="toast-content">
+            <div class="toast-title" id="toastTitle">Notification</div>
+            <div class="toast-msg" id="toastMessage">Something happened.</div>
+        </div>
+    </div>
+
+    <script src="hr-app.js"></script>
+</body>
+</html>
