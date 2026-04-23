@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRT Help Desk Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-brand" onclick="app.showView('role-selector')">
+      <div class="brand-logo">🏨</div>
+      <div>
+        <div class="brand-name">CRT Help Desk</div>
+        <div class="brand-sub">Central Recruitment Portal</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="role-badge" id="roleBadge">Role: <span id="currentRoleDisplay">—</span></div>
+      <button id="logoutBtn" class="btn btn-secondary hidden" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff;" onclick="app.logout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    
+    <!-- ROLE SELECTOR -->
+    <div class="view active" id="view-role-selector">
+      <div class="form-section-title" style="margin-bottom: 8px;">Select Your Role <div class="section-line"></div></div>
+      <p style="color: var(--muted); font-size: 14px; margin-bottom: 24px;">Please login to your specific dashboard to continue.</p>
+      
+      <div class="role-selector">
+        <div class="role-card" onclick="app.setRole('unit-hr')">
+          <div class="role-icon">🧑‍💼</div>
+          <div class="role-title">Unit HR</div>
+          <div class="role-desc">Raise requirements, access resumes, and share candidate feedback.</div>
+        </div>
+        <div class="role-card" onclick="app.setRole('crt-team')">
+          <div class="role-icon">🎯</div>
+          <div class="role-title">CRT Team</div>
+          <div class="role-desc">Manage sourcing, upload candidate links, and handle closure.</div>
+        </div>
+        <div class="role-card" onclick="app.setRole('functional-head')">
+          <div class="role-icon">👔</div>
+          <div class="role-title">Functional Head</div>
+          <div class="role-desc">Review candidates and provide specific interview decisions.</div>
+        </div>
+        <div class="role-card" onclick="app.setRole('admin')">
+          <div class="role-icon">⚙️</div>
+          <div class="role-title">Admin</div>
+          <div class="role-desc">Full visibility, system oversight, and forced ticket closures.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGIN VIEW (For CRT and Admin) -->
+    <div class="view" id="view-login">
+      <div class="form-panel" style="max-width: 400px; margin: 40px auto; text-align:center;">
+        <div class="ticket-icon" style="margin: 0 auto 20px;">🔒</div>
+        <div class="form-section-title" style="justify-content:center;" id="login_title">Authentication <div class="section-line" style="display:none;"></div></div>
+        
+        <div class="form-grid cols-1" style="text-align: left; margin-bottom: 24px;">
+          <div class="field-group">
+            <label id="login_id_label">Username / Email</label>
+            <input type="text" id="login_username" placeholder="Username or Email">
+          </div>
+          <div class="field-group">
+            <label>Password</label>
+            <input type="password" id="login_password" placeholder="••••••••">
+          </div>
+          
+          <div style="text-align: center; margin-top: 8px;">
+            <button class="btn btn-secondary" style="width:100%; border-style: dashed;" id="getOtpBtn" onclick="app.sendOTP()">Get OTP via Email</button>
+          </div>
+
+          <div id="otp_block" class="hidden" style="margin-top: 16px;">
+            <div class="field-group">
+              <label>Enter OTP</label>
+              <input type="text" id="login_otp" placeholder="••••••" maxlength="6" onkeypress="if(event.key === 'Enter') app.handleLogin()">
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top: 12px;" onclick="app.handleLogin()">Verify & Login</button>
+          </div>
+        </div>
+        
+        <button class="btn btn-secondary" id="backToHomeBtn" style="width:100%; margin-top:0px; box-shadow:none;" onclick="app.showView('role-selector')">Back to Home</button>
+      </div>
+    </div>
+
+    <!-- UNIT HR WORKFLOW -->
+    <div class="view" id="view-unit-hr">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="app.switchTab('unit-hr', 'create-request')">Raise Request</button>
+        <button class="tab-btn" onclick="app.switchTab('unit-hr', 'manage-request')">Manage Request</button>
+      </div>
+
+      <!-- Create Request Tab -->
+      <div class="form-panel active-tab" id="tab-unit-hr-create-request">
+        <div class="form-section-title">Hotel & HR Details <div class="section-line"></div></div>
+        <div class="form-grid">
+          <div class="field-group">
+            <label>Hotel Name <span class="required">*</span></label>
+            <input type="text" id="hr_hotelName" placeholder="e.g. Grand Hyatt Mumbai">
+          </div>
+          <div class="field-group">
+            <label>State Name <span class="required">*</span></label>
+            <input type="text" id="hr_stateName" placeholder="e.g. Maharashtra">
+          </div>
+          <div class="field-group">
+            <label>HR Contact Name <span class="required">*</span></label>
+            <input type="text" id="hr_hrName" placeholder="Full name">
+          </div>
+          <div class="field-group">
+            <label>HR Contact Number <span class="required">*</span></label>
+            <input type="tel" id="hr_hrContact" placeholder="+91 00000 00000">
+          </div>
+          <div class="field-group" style="grid-column: span 2;">
+            <label>HR Email ID <span class="required">*</span></label>
+            <input type="email" id="hr_hrEmail" placeholder="hr@hotelname.com">
+          </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top: 32px;">Position Details <div class="section-line"></div></div>
+        <div class="form-grid">
+          <div class="field-group">
+            <label>Department <span class="required">*</span></label>
+            <select id="hr_department" onchange="app.populateDesignations('hr_department','hr_designation')">
+              <option value="">Select department</option>
+              <option>Housekeeping</option>
+              <option>Front Office</option>
+              <option>Administration</option>
+              <option>F&B Service</option>
+              <option>Engineering</option>
+              <option>Kitchen</option>
+              <option>Purchase</option>
+              <option>IT</option>
+              <option>Sales</option>
+              <option>Reservation</option>
+              <option>F&B Production</option>
+              <option>Finance</option>
+              <option>Security</option>
+              <option>Human Resources</option>
+              <option>Information Technology</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Designation <span class="required">*</span></label>
+            <select id="hr_designation">
+              <option value="">Select department first</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Number of Positions <span class="required">*</span></label>
+            <input type="number" id="hr_numPositions" placeholder="e.g. 2">
+          </div>
+          <div class="field-group">
+            <label>Experience Required</label>
+            <input type="text" id="hr_experience" placeholder="e.g. 3–5 years">
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: right;">
+          <button class="btn btn-primary" onclick="app.submitNewTicket()">Submit Ticket →</button>
+        </div>
+      </div>
+
+      <!-- Manage Request Tab -->
+      <div class="form-panel hidden" id="tab-unit-hr-manage-request">
+        <div class="search-bar">
+          <input type="text" id="hr_searchTicket" placeholder="Enter Ticket ID (e.g. CRT-XXXX-XXXX)">
+          <button class="btn btn-secondary" onclick="app.searchTicket('unit-hr')">🔍 Search</button>
+        </div>
+
+        <div id="hr_ticketDetails" class="hidden">
+          <!-- Ticket Header -->
+          <div class="ticket-display">
+            <div class="ticket-icon">🎫</div>
+            <div>
+              <div class="ticket-info-label">Ticket ID</div>
+              <div class="ticket-id-val" id="hr_dispId">—</div>
+              <div style="font-size:12px; color:var(--muted); margin-top:4px;" id="hr_dispDetails">—</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:4px; font-family:'JetBrains Mono', monospace;" id="hr_dispUpdated"></div>
+            </div>
+            <div style="margin-left:auto; text-align:right;">
+              <span class="status-badge status-Created" id="hr_dispStatus">Status</span>
+            </div>
+          </div>
+
+          <!-- Position Summary -->
+          <div class="ticket-info-strip" id="hr_positionStrip">
+            <!-- populated by JS -->
+          </div>
+
+          <!-- Resumes uploaded by CRT -->
+          <div class="form-section-title" style="margin-top:24px;">
+            📁 Resumes Uploaded by CRT Team <div class="section-line"></div>
+          </div>
+          <div id="hr_resumeCount" class="resume-count-badge" style="margin-bottom:12px;"></div>
+          <div class="resume-list" id="hr_resumeList">
+            <!-- Populated via JS -->
+          </div>
+
+          <!-- HR Feedback -->
+          <div class="form-section-title" style="margin-top: 36px;">HR Interview Feedback <div class="section-line"></div></div>
+          <div class="form-grid cols-1">
+            <div class="field-group">
+              <label>Interview Decision <span class="required">*</span></label>
+              <select id="hr_feedbackDecision">
+                <option value="">Select decision</option>
+                <option>Selected a Candidate</option>
+                <option>Rejected All</option>
+                <option>Forward to Functional Head</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Remarks <span class="required">*</span></label>
+              <textarea id="hr_feedbackRemarks" placeholder="Share your feedback after reviewing the resumes / interviewing candidates..."></textarea>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <button class="btn btn-primary" onclick="app.saveFeedback('hr')">Save Feedback</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- CRT TEAM WORKFLOW -->
+    <div class="view" id="view-crt-team">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="app.switchTab('crt-team', 'all-tickets')">All Tickets</button>
+        <button class="tab-btn" onclick="app.switchTab('crt-team', 'manage-ticket')">Manage Ticket</button>
+      </div>
+
+      <!-- All Tickets Tab -->
+      <div class="form-panel active-tab" id="tab-crt-team-all-tickets">
+        <div class="form-section-title">CRT Operations — All Tickets <div class="section-line"></div></div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 24px;">Click any ticket row to open its management panel.</p>
+
+        <div style="overflow-x: auto;">
+          <table class="tickets-table" id="crt_ticketsTable">
+            <thead>
+              <tr>
+                <th>Ticket ID</th>
+                <th>Logged Date & Time</th>
+                <th>Hotel</th>
+                <th>Position</th>
+                <th>Positions #</th>
+                <th>Status</th>
+                <th>Outcome / Remarks</th>
+                <th>Resumes</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Manage Ticket Tab -->
+      <div class="form-panel hidden" id="tab-crt-team-manage-ticket">
+        <div class="search-bar">
+          <input type="text" id="crt_searchTicket" placeholder="Search by Ticket ID">
+          <button class="btn btn-secondary" onclick="app.searchTicket('crt-team')">🔍 Search</button>
+          <button class="btn btn-secondary" onclick="app.switchTab('crt-team', 'all-tickets')">← Back to List</button>
+        </div>
+
+        <div id="crt_ticketDetails" class="hidden">
+          <!-- Ticket Header -->
+          <div class="ticket-display">
+            <div class="ticket-icon">🎫</div>
+            <div>
+              <div class="ticket-id-val" id="crt_dispId">—</div>
+              <div style="font-size:12px; color:var(--muted); margin-top: 4px;" id="crt_dispDetails">Hotel Name | Designation</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:4px; font-family:'JetBrains Mono', monospace;" id="crt_dispUpdated"></div>
+            </div>
+            <div style="margin-left:auto; text-align:right;">
+              <span class="status-badge" id="crt_dispStatus">Status</span>
+            </div>
+          </div>
+
+          <!-- Editable Request Data -->
+          <div class="form-section-title">Request Details (Editable) <div class="section-line"></div></div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label>Hotel Name</label>
+              <input type="text" id="crt_edit_hotelName">
+            </div>
+            <div class="field-group">
+              <label>State</label>
+              <input type="text" id="crt_edit_stateName">
+            </div>
+            <div class="field-group">
+              <label>HR Name</label>
+              <input type="text" id="crt_edit_hrName">
+            </div>
+            <div class="field-group">
+              <label>HR Contact</label>
+              <input type="tel" id="crt_edit_hrContact">
+            </div>
+            <div class="field-group">
+              <label>HR Email ID</label>
+              <input type="email" id="crt_edit_hrEmail">
+            </div>
+            <div class="field-group">
+              <label>Department</label>
+              <select id="crt_edit_department" onchange="app.populateDesignations('crt_edit_department','crt_edit_designation')">
+                <option value="">Select department</option>
+                <option>Housekeeping</option>
+                <option>Front Office</option>
+                <option>Administration</option>
+                <option>F&B Service</option>
+                <option>Engineering</option>
+                <option>Kitchen</option>
+                <option>Purchase</option>
+                <option>IT</option>
+                <option>Sales</option>
+                <option>Reservation</option>
+                <option>F&B Production</option>
+                <option>Finance</option>
+                <option>Security</option>
+                <option>Human Resources</option>
+                <option>Information Technology</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Designation</label>
+              <select id="crt_edit_designation">
+                <option value="">Select department first</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>No. of Positions</label>
+              <input type="number" id="crt_edit_numPositions">
+            </div>
+            <div class="field-group">
+              <label>Experience Required</label>
+              <input type="text" id="crt_edit_experience">
+            </div>
+          </div>
+          <div style="text-align: right; margin-bottom: 32px;">
+            <button class="btn btn-primary" onclick="app.crtSaveDetails()">💾 Save Changes</button>
+          </div>
+
+          <!-- Resumes -->
+          <div class="form-section-title">Upload Resumes <div class="section-line"></div></div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label>Upload File (PDF, Word, Excel)</label>
+              <div style="display:flex; gap:10px;">
+                <input type="file" id="crt_newResumeFile" accept=".pdf,.doc,.docx,.xls,.xlsx" style="flex:1; padding: 9px 16px;">
+                <button class="btn btn-secondary" onclick="app.addResumeFile()">+ Upload</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>Or Paste Link</label>
+              <div style="display:flex; gap:10px;">
+                <input type="url" id="crt_newResumeLink" placeholder="https://drive.google.com/..." style="flex:1;">
+                <button class="btn btn-secondary" onclick="app.addResumeLink()">+ Add Link</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-grid cols-1">
+            <div class="resume-list" id="crt_resumeList" style="margin-top: 10px;">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+          <!-- Ticket Closure -->
+          <div class="form-section-title" style="margin-top: 32px;">Ticket Closure <div class="section-line"></div></div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label>Closure Action</label>
+              <select id="crt_closureAction">
+                <option value="">Select Action</option>
+                <option value="Position Filled">✅ Position Filled</option>
+                <option value="Cancelled">❌ Cancelled</option>
+                <option value="On Hold">⏸ On Hold</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Status Override</label>
+              <select id="crt_statusOverride">
+                <option value="">— No change —</option>
+                <option value="Created">Created</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resumes Uploaded">Resumes Uploaded</option>
+                <option value="Interview Completed">Interview Completed</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <button class="btn btn-success" onclick="app.closeTicket('crt-team')">Update Ticket Status</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- FUNCTIONAL HEAD WORKFLOW -->
+    <div class="view" id="view-functional-head">
+      <div class="form-panel">
+        <div class="form-section-title">Functional Head Review Dashboard <div class="section-line"></div></div>
+        
+        <div class="search-bar">
+          <input type="text" id="fh_searchTicket" placeholder="Search by Ticket ID">
+          <button class="btn btn-secondary" onclick="app.searchTicket('functional-head')">🔍 Search</button>
+        </div>
+
+        <div id="fh_ticketDetails" class="hidden">
+          <div class="ticket-display">
+            <div class="ticket-icon">🎫</div>
+            <div>
+              <div class="ticket-id-val" id="fh_dispId">—</div>
+              <div style="font-size:12px; color:var(--muted); margin-top: 4px;" id="fh_dispDetails">Hotel Name | Designation</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:4px; font-family:'JetBrains Mono', monospace;" id="fh_dispUpdated"></div>
+            </div>
+            <div style="margin-left:auto; text-align:right;">
+              <span class="status-badge" id="fh_dispStatus">Status</span>
+            </div>
+          </div>
+
+          <div class="form-section-title">Resumes for Review <div class="section-line"></div></div>
+          <div class="resume-list" id="fh_resumeList"></div>
+
+          <div class="form-section-title" style="margin-top: 32px;">Interview Evaluation <div class="section-line"></div></div>
+          <div class="form-grid cols-1">
+            <div class="field-group">
+              <label>Final Decision</label>
+              <select id="fh_feedbackDecision">
+                <option value="">Select decision</option>
+                <option>Selected</option>
+                <option>Rejected</option>
+                <option>Hold — Reconsider Later</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Remarks</label>
+              <textarea id="fh_feedbackRemarks" placeholder="Detailed evaluation remarks..."></textarea>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <button class="btn btn-primary" onclick="app.saveFeedback('fh')">Save Evaluation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ADMIN WORKFLOW -->
+    <div class="view" id="view-admin">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="app.switchTab('admin', 'tickets')">Global Tickets</button>
+        <button class="tab-btn" onclick="app.switchTab('admin', 'users')">CRT User Management</button>
+        <button class="tab-btn" onclick="app.switchTab('admin', 'maintenance')">Maintenance</button>
+      </div>
+
+      <!-- Tickets Tab -->
+      <div class="form-panel active-tab" id="tab-admin-tickets">
+        <div class="form-section-title">System Administrator <div class="section-line"></div></div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 24px;">Global overview of all recruitment tickets across the system.</p>
+        <div style="overflow-x: auto;">
+          <table class="tickets-table" id="admin_ticketsTable">
+            <thead>
+              <tr>
+                <th>Ticket ID</th>
+                <th>Logged Date & Time</th>
+                <th>Hotel</th>
+                <th>Position</th>
+                <th>Status</th>
+                <th>Outcome / Remarks</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User Management Tab -->
+      <div class="form-panel hidden" id="tab-admin-users">
+        
+        <div class="form-section-title">Create CRT User <div class="section-line"></div></div>
+        <div class="form-grid">
+          <div class="field-group">
+            <label>New Username</label>
+            <input type="text" id="admin_newUsername" placeholder="e.g. jdoe">
+          </div>
+          <div class="field-group">
+             <label>Password</label>
+             <div style="display:flex; gap:10px;">
+               <input type="password" id="admin_newPassword" placeholder="••••••••" style="flex:1;">
+               <button class="btn btn-primary" onclick="app.adminCreateUser()">Create User</button>
+             </div>
+          </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top:40px;">Active CRT Users <div class="section-line"></div></div>
+        <div style="overflow-x: auto;">
+          <table class="tickets-table" id="admin_usersTable">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Created On</th>
+                <th style="width:120px; text-align:right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Maintenance Tab [NEW] -->
+      <div class="form-panel hidden" id="tab-admin-maintenance">
+        <div class="form-section-title">Data Maintenance <div class="section-line"></div></div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height:1.5;">
+          Use this tool to permanently clear ticket records and their associated resumes from the system based on a date range.
+        </p>
+        
+        <div class="zoho-note" style="background: rgba(200,80,26,0.05); border-color: rgba(200,80,26,0.15); color: var(--urgent); margin-bottom: 24px;">
+           ⚠️ <strong>WARNING:</strong> This action is permanent and cannot be undone. All database records and files in the storage will be deleted for the selected period.
+        </div>
+
+        <div class="form-grid">
+          <div class="field-group">
+            <label>Delete From Date</label>
+            <input type="date" id="admin_maintenance_start" style="padding: 10px 14px;">
+          </div>
+          <div class="field-group">
+            <label>Delete To Date</label>
+            <input type="date" id="admin_maintenance_end" style="padding: 10px 14px;">
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 16px;">
+          <div style="font-size: 11px; color: var(--muted); max-width: 250px;">
+            Required format: Select both dates to define the range for cleanup.
+          </div>
+          <button class="btn btn-secondary" style="border-color: var(--urgent); color: var(--urgent); padding: 12px 24px;" onclick="app.adminClearDataRange()">
+            🚀 Clear & Delete Data
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Processing...</div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
