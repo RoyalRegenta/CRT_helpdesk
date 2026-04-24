@@ -7,14 +7,87 @@ const app = {
   _ticketsCache: {},
 
   deptDesignations: {
-    'Housekeeping': ['Room Attendant', 'Housekeeping Supervisor', 'Executive Housekeeper'],
-    'Front Office': ['Front Desk Agent', 'Concierge', 'Front Office Manager'],
-    'F&B Service': ['Waiter / Steward', 'Captain', 'Restaurant Manager'],
-    'Engineering': ['Technician', 'Electrician', 'Chief Engineer'],
-    'Kitchen': ['Commis I', 'Chef de Partie', 'Executive Chef'],
-    'Sales': ['Sales Executive', 'Sales Manager', 'Director of Sales'],
-    'Human Resources': ['HR Executive', 'HR Manager'],
-    'Information Technology': ['IT Executive', 'IT Manager']
+    'Housekeeping': [
+      'Executive Housekeeper', 'Housekeeping Manager', 'Public Area Attendant', 
+      'Housekeeping Attendant', 'Housekeeping Supervisor', 'Assistant Manager Housekeeping', 
+      'Housekeeping Desk Attendant', 'Laundry Attendant', 'Housekeeping Executive', 
+      'Laundry Manager', 'Asst. Laundry Manager', 'Laundry Executive', 
+      'Deputy Housekeeper', 'Desk Attendant', 'Tailor'
+    ],
+    'Front Office': [
+      'Room Division Manager', 'Front Office Manager', 'Duty Manager', 
+      'Front Office Executive', 'Guest Service Associate', 'Bell Boy', 
+      'Front Office Supervisor', 'Asst. Front Office Manager', 'Guest Relations Executive', 
+      'Concierge Manager', 'Concierge Executive', 'Front Office Associate', 
+      'Senior Guest Service Associate', 'Service Duty Manager', 'Junior Duty Manager', 
+      'Valet cum Bell Boy', 'GRM'
+    ],
+    'Administration': [
+      'Sr. VP Operations and Cluster Head (West)', 'General Manager (GM)', 
+      'Hotel Manager (HM)', 'Operations Manager (EAM)'
+    ],
+    'F&B Service': [
+      'Director Food & Beverage', 'F&B Associate', 'Captain', 'F&B Executive', 
+      'Hostess', 'F&B Manager', 'Restaurant Manager', 'Assistant Food & Beverage Manager', 
+      'Banquet Manager', 'F&B Supervisor', 'Assistant Restaurant Manager', 
+      'Assistant Banquet Manager', 'Bar Executive', 'Bar Associate'
+    ],
+    'Engineering': [
+      'Electrical Technician', 'Plumbing technician', 'HVAC Technician', 
+      'Painter', 'General multi-technician', 'Shift Engineer', 'Chief Engineer', 
+      'Engineering Manager', 'Asst. Manager Engineering', 'Carpenter', 
+      'Engineering Executive', 'Engineering Supervisor', 'Multi skill technician', 
+      'Lifeguard (Swimming pool)', 'Deputy Chief Engineer', 'Shift Supervisor'
+    ],
+    'Store': [
+      'Store Supervisor', 'Store Executive'
+    ],
+    'Purchase': [
+      'Assistant Manager Purchase', 'Purchase Executive', 'Store Assistant', 
+      'Purchase Assistant', 'Purchase Manager', 'Receiving Assistant', 
+      'Store In-charge', 'Purchase Supervisor'
+    ],
+    'SPA': [
+      'SPA Receptionist', 'SPA Manager'
+    ],
+    'Sales': [
+      'Director of Sales', 'Assistant Director of Sales', 'Marcom Manager', 
+      'Sales Manager', 'Assistant Sales Manager', 'Sales Executive', 
+      'Sales Coordinator', 'Social Media Executive', 'Loyalty Manager', 
+      'Senior Sales Manager', 'Associate Director of Sales', 'Banquets Sales Manager'
+    ],
+    'Reservation': [
+      'Reservation Manager', 'Reservation Executive', 'Reservation Supervisor', 
+      'Reservation Associate', 'Activity Manager', 'Activity Executive'
+    ],
+    'F&B Production': [
+      'Executive Chef', 'Bakery & Pastry Chef', 'Executive Sous Chef', 
+      'Sous Chef', 'Senior Chef de Partie (Sr. CDP)', 'Chef De Partie', 
+      'Demi Chef de Partie', 'Commis I', 'Butcher', 'Kitchen Stewarding Supervisor', 
+      'Asst. Kitchen Stewarding Manager', 'Commis II', 'Commis III', 
+      'Kitchen Stewarding Associate', 'Senior Sous Chef', 'Junior Sous Chef', 
+      'KST Executive', 'KST Supervisor', 'Kitchen Stewarding Manager'
+    ],
+    'Finance': [
+      'Unit Finance Controller', 'Finance Manager', 'Assistant Manager Accounts', 
+      'Credit Manager', 'Food & Beverage Controller', 'Director of Finance', 
+      'Finance Executive', 'Finance Associate', 'Accounts Receivable', 
+      'Accounts Payable', 'Regional Finance Controller'
+    ],
+    'Security': [
+      'Security Supervisor', 'Security Manager', 'Assistant Manager Security', 
+      'Chief Security Officer', 'Security Guard', 'Driver / Chauffeur'
+    ],
+    'Human Resource': [
+      'Director of Human Resource', 'Assistant Human Resource Manager', 'HR Assistant', 
+      'Human Resource Executive', 'Associate Director of Human Resource', 
+      'Human Resource Manager', 'Human Resource Coordinator', 'Human Resource Assistant', 
+      'Training Manager', 'Training Executive', 'Training Associate', 
+      'HR Supervisor', 'Cluster HR Manager'
+    ],
+    'Information Technology': [
+      'IT Manager', 'IT Executive', 'IT Assistant'
+    ]
   },
 
   // ─── UTILS ───
