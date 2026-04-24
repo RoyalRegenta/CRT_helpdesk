@@ -402,8 +402,48 @@ const app = {
     }
   },
 
-  adminCreateUser: () => alert("User creation available via Catalyst Console natively."),
-  adminClearDataRange: () => alert("Maintenance tasks available via Catalyst Console natively.")
+  adminCreateUser: async () => {
+    const username = app.getVal('admin_newUsername');
+    const password = app.getVal('admin_newPassword');
+    
+    if (!username || !password) return alert("Please enter both username and password.");
+    
+    app.showLoading("Creating User...");
+    const res = await app.api('admin-create-user', { username, password });
+    app.hideLoading();
+    
+    if (res.ok) {
+        alert("User successfully created!");
+        app.setVal('admin_newUsername', '');
+        app.setVal('admin_newPassword', '');
+    } else {
+        alert("Failed to create user: " + (res.error || "Unknown Error"));
+    }
+  },
+
+  adminClearDataRange: async () => {
+    const startDate = app.getVal('admin_maintenance_start');
+    const endDate = app.getVal('admin_maintenance_end');
+    
+    if (!startDate || !endDate) return alert("Please select both a Start Date and an End Date.");
+    
+    if (!confirm(`WARNING: Are you sure you want to permanently delete all tickets from ${startDate} to ${endDate}? This action cannot be undone.`)) {
+        return;
+    }
+    
+    app.showLoading("Deleting data... Please wait.");
+    const res = await app.api('admin-clear-data', { startDate, endDate });
+    app.hideLoading();
+    
+    if (res.ok) {
+        alert(`Successfully deleted ${res.deleted} tickets!`);
+        app.setVal('admin_maintenance_start', '');
+        app.setVal('admin_maintenance_end', '');
+        app.loadAllTickets(); // Refresh table
+    } else {
+        alert("Failed to delete data: " + (res.error || "Unknown Error"));
+    }
+  }
 };
 
 window.onload = () => {
