@@ -141,31 +141,23 @@ const app = {
 
   submitNewTicket: async () => {
     const req = {
-      hotelName: app.getVal('hr_hotelName'),
-      stateName: app.getVal('hr_stateName'),
-      hrName: app.getVal('hr_hrName'),
-      hrContact: app.getVal('hr_hrContact'),
-      hrEmail: app.getVal('hr_hrEmail'),
-      department: app.getVal('hr_department'),
-      designation: app.getVal('hr_designation'),
-      numPositions: app.getVal('hr_numPositions'),
-      experience: app.getVal('hr_experience')
+      HotelName: app.getVal('hr_hotelName'),
+      StateName: app.getVal('hr_stateName'),
+      HRContactName: app.getVal('hr_hrName'),
+      HRContactNumber: app.getVal('hr_hrContact'),
+      HREmailID: app.getVal('hr_hrEmail'),
+      Department: app.getVal('hr_department'),
+      Designation: app.getVal('hr_designation'),
+      NumberOfPositions: app.getVal('hr_numPositions'),
+      ExperienceRequired: app.getVal('hr_experience')
     };
 
-    if (!req.hotelName || !req.hrEmail || !req.department) return alert("Fill required fields.");
+    if (!req.HotelName || !req.HREmailID || !req.Department) return alert("Fill required fields.");
 
     app.showLoading('Submitting...');
     const res = await app.api('create-ticket', {
-      Status: 'Created',
-      HotelName: req.hotelName,
-      State: req.stateName,
-      HrName: req.hrName,
-      HrEmail: req.hrEmail,
-      HrContact: req.hrContact,
-      Department: req.department,
-      Designation: req.designation,
-      NumPositions: req.numPositions,
-      Experience: req.experience
+      ...req,
+      Status: 'Created'
     });
     app.hideLoading();
 
@@ -203,14 +195,14 @@ const app = {
     if (detailsEl) detailsEl.innerText = details;
 
     const updatedEl = document.getElementById(`${pfx}_dispUpdated`);
-    if (updatedEl) updatedEl.innerText = `Updated: ${res.ticket.UpdateDaT || res.ticket.TimeStamps}`;
+    if (updatedEl) updatedEl.innerText = `Updated: ${res.ticket.UpdtedTimeandDate || res.ticket.LoggedTimeandDate}`;
 
     // Specific role populating
     if (pfx === 'hr') {
       const strip = document.getElementById('hr_positionStrip');
       if (strip) strip.innerHTML = `
         <div class="info-chip"><div class="info-chip-label">Hotel</div><div class="info-chip-val">${res.ticket.HotelName}</div></div>
-        <div class="info-chip"><div class="info-chip-label">Positions</div><div class="info-chip-val">${res.ticket.NumPositions}</div></div>
+        <div class="info-chip"><div class="info-chip-label">Positions</div><div class="info-chip-val">${res.ticket.NumberOfPositions}</div></div>
       `;
       let hrFb = {}; try { hrFb = JSON.parse(res.ticket.HrFeedBack || '{}'); } catch(e){}
       app.setVal('hr_feedbackDecision', hrFb.decision || '');
@@ -219,15 +211,15 @@ const app = {
 
     if (pfx === 'crt') {
       app.setVal('crt_edit_hotelName', res.ticket.HotelName);
-      app.setVal('crt_edit_stateName', res.ticket.State);
-      app.setVal('crt_edit_hrName', res.ticket.HrName);
-      app.setVal('crt_edit_hrContact', res.ticket.HrContact);
-      app.setVal('crt_edit_hrEmail', res.ticket.HrEmail);
+      app.setVal('crt_edit_stateName', res.ticket.StateName);
+      app.setVal('crt_edit_hrName', res.ticket.HRContactName);
+      app.setVal('crt_edit_hrContact', res.ticket.HRContactNumber);
+      app.setVal('crt_edit_hrEmail', res.ticket.HREmailID);
       app.setVal('crt_edit_department', res.ticket.Department);
       app.populateDesignations('crt_edit_department', 'crt_edit_designation');
       app.setVal('crt_edit_designation', res.ticket.Designation);
-      app.setVal('crt_edit_numPositions', res.ticket.NumPositions);
-      app.setVal('crt_edit_experience', res.ticket.Experience);
+      app.setVal('crt_edit_numPositions', res.ticket.NumberOfPositions);
+      app.setVal('crt_edit_experience', res.ticket.ExperienceRequired);
     }
     
     app.renderResumes(pfx, res.ticket.Resumes);
@@ -282,14 +274,14 @@ const app = {
     if (!t) return;
     
     t.HotelName = app.getVal('crt_edit_hotelName');
-    t.State = app.getVal('crt_edit_stateName');
-    t.HrName = app.getVal('crt_edit_hrName');
-    t.HrContact = app.getVal('crt_edit_hrContact');
-    t.HrEmail = app.getVal('crt_edit_hrEmail');
+    t.StateName = app.getVal('crt_edit_stateName');
+    t.HRContactName = app.getVal('crt_edit_hrName');
+    t.HRContactNumber = app.getVal('crt_edit_hrContact');
+    t.HREmailID = app.getVal('crt_edit_hrEmail');
     t.Department = app.getVal('crt_edit_department');
     t.Designation = app.getVal('crt_edit_designation');
-    t.NumPositions = app.getVal('crt_edit_numPositions');
-    t.Experience = app.getVal('crt_edit_experience');
+    t.NumberOfPositions = app.getVal('crt_edit_numPositions');
+    t.ExperienceRequired = app.getVal('crt_edit_experience');
 
     app.showLoading('Updating...');
     const res = await app.api('update-ticket', t);
