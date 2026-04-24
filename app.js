@@ -438,12 +438,14 @@ const app = {
         return;
     }
 
-    if (!res.users || res.users.length === 0) {
+    const filteredUsers = (res.users || []).filter(u => u.UserName !== 'it@royalorchidhotels.com');
+
+    if (filteredUsers.length === 0) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No active users found.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = res.users.map(u => `
+    tbody.innerHTML = filteredUsers.map(u => `
       <tr>
         <td>${u.UserName || '-'}</td>
         <td>${new Date(u.CREATEDTIME).toLocaleDateString() || '-'}</td>
@@ -455,6 +457,7 @@ const app = {
   },
 
   adminDeleteUser: async (userId, username) => {
+    if (username === 'it@royalorchidhotels.com') return alert("Cannot delete the super admin account.");
     if (!confirm(`Are you sure you want to delete user '${username}'?`)) return;
     app.showLoading("Deleting User...");
     const res = await app.api('admin-delete-user', { userId });
