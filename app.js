@@ -123,9 +123,10 @@ const app = {
       app.showView(app.currentRole);
       app.switchTab(app.currentRole, app.currentRole === 'admin' ? 'tickets' : 'all-tickets');
       
-      // Load all tickets if admin logged in
+      // Load all tickets and users if admin logged in
       if (app.currentRole === 'admin') {
          app.loadAllTickets();
+         app.loadAllUsers();
       }
     } else {
       alert(res.error || "Login Failed.");
@@ -420,8 +421,48 @@ const app = {
         alert("User successfully created!");
         app.setVal('admin_newUsername', '');
         app.setVal('admin_newPassword', '');
+        app.loadAllUsers(); // Refresh the users table
     } else {
         alert("Failed to create user: " + (res.error || "Unknown Error"));
+    }
+  },
+
+  loadAllUsers: async () => {
+    const tbody = document.querySelector('#admin_usersTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Loading users...</td></tr>';
+    
+    const res = await app.api('admin-get-users');
+    if (!res.ok) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">Failed to load users</td></tr>';
+        return;
+    }
+
+    if (!res.users || res.users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No active users found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = res.users.map(u => `
+      <tr>
+        <td>${u.UserName || '-'}</td>
+        <td>${new Date(u.CREATEDTIME).toLocaleDateString() || '-'}</td>
+        <td style="text-align:right;">
+          <button class="btn btn-secondary" style="border-color:var(--urgent); color:var(--urgent); padding:4px 12px; font-size:11px;" onclick="app.adminDeleteUser('${u.ROWID}', '${u.UserName}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  },
+
+  adminDeleteUser: async (userId, username) => {
+    if (!confirm(`Are you sure you want to delete user '${username}'?`)) return;
+    app.showLoading("Deleting User...");
+    const res = await app.api('admin-delete-user', { userId });
+    app.hideLoading();
+    if (res.ok) {
+        app.loadAllUsers();
+    } else {
+        alert("Failed to delete user: " + (res.error || "Unknown Error"));
     }
   },
 
