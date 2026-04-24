@@ -297,9 +297,10 @@ const app = {
   // ─── SEARCH & VIEW TICKET ───
   searchTicket: async (rolePrefix) => {
     const pfx = rolePrefix === 'unit-hr' ? 'hr' : rolePrefix === 'crt-team' ? 'crt' : 'fh';
-    const tid = app.getVal(`${pfx}_searchTicket`);
+    let tid = app.getVal(`${pfx}_searchTicket`);
     if (!tid) return;
-
+    tid = tid.trim(); // Remove any accidental spaces
+    
     app.showLoading('Searching...');
     const res = await app.api('get-ticket', { ticketId: tid });
     app.hideLoading();
