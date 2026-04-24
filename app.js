@@ -133,6 +133,10 @@ const app = {
   },
 
   logout: () => {
+    if (app.loggedInUser) {
+        // Send logout API request in the background
+        app.api('crt-logout', { username: app.loggedInUser }).catch(e => console.error(e));
+    }
     app.currentRole = null;
     app.loggedInUser = null;
     app.showView('role-selector');
