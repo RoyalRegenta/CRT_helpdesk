@@ -122,6 +122,11 @@ const app = {
       document.getElementById('currentRoleDisplay').innerText = app.currentRole === 'admin' ? 'Admin' : 'CRT Team';
       app.showView(app.currentRole);
       app.switchTab(app.currentRole, app.currentRole === 'admin' ? 'tickets' : 'all-tickets');
+      
+      // Load all tickets if admin logged in
+      if (app.currentRole === 'admin') {
+         app.loadAllTickets();
+      }
     } else {
       alert(res.error || "Login Failed.");
     }
@@ -131,6 +136,42 @@ const app = {
     app.currentRole = null;
     app.loggedInUser = null;
     app.showView('role-selector');
+  },
+
+  loadAllTickets: async () => {
+    const tbody = document.querySelector('#admin_ticketsTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading tickets...</td></tr>';
+    
+    const res = await app.api('get-all-tickets');
+    if (!res.ok) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Failed to load tickets</td></tr>';
+        return;
+    }
+
+    if (!res.tickets || res.tickets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No tickets found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = res.tickets.map(t => {
+        let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
+        let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+        const remarks = fhFb.remarks || hrFb.remarks || '-';
+        
+        return `
+          <tr style="cursor: pointer" onclick="app.setVal('admin_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('admin')">
+            <td>${t.TicketID || t.ROWID || '-'}</td>
+            <td>${new Date(t.LoggedTimeandDate).toLocaleDateString() || '-'}</td>
+            <td>${t.HotelName || '-'}</td>
+            <td>${t.Designation || '-'} (${t.Department || '-'})</td>
+            <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
+            <td>${remarks}</td>
+            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
+            <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">View</button></td>
+          </tr>
+        `;
+    }).join('');
   },
 
   // ─── HR ACTIONS ───
