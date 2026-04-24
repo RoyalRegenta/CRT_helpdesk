@@ -148,7 +148,7 @@ const app = {
       HREmailID: app.getVal('hr_hrEmail'),
       Department: app.getVal('hr_department'),
       Designation: app.getVal('hr_designation'),
-      NumberOfPositions: app.getVal('hr_numPositions'),
+      NumberOfPositions: parseInt(app.getVal('hr_numPositions')) || 0,
       ExperienceRequired: app.getVal('hr_experience')
     };
 
@@ -195,7 +195,7 @@ const app = {
     if (detailsEl) detailsEl.innerText = details;
 
     const updatedEl = document.getElementById(`${pfx}_dispUpdated`);
-    if (updatedEl) updatedEl.innerText = `Updated: ${res.ticket.UpdtedTimeandDate || res.ticket.LoggedTimeandDate}`;
+    if (updatedEl) updatedEl.innerText = `Updated: ${res.ticket.UpdatedTimeandDate || res.ticket.LoggedTimeandDate}`;
 
     // Specific role populating
     if (pfx === 'hr') {
