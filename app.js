@@ -196,10 +196,12 @@ const app = {
       app.showView(app.currentRole);
       app.switchTab(app.currentRole, app.currentRole === 'admin' ? 'tickets' : 'all-tickets');
       
-      // Load all tickets and users if admin logged in
+      // Load data based on role
       if (app.currentRole === 'admin') {
          app.loadAllTickets();
          app.loadAllUsers();
+      } else if (app.currentRole === 'crt-team') {
+         app.loadCrtTickets();
       }
     } else {
       alert(res.error || "Login Failed.");
@@ -540,6 +542,37 @@ const app = {
     } else {
         alert("Failed to delete user: " + (res.error || "Unknown Error"));
     }
+  },
+
+  loadCrtTickets: async () => {
+    const tbody = document.querySelector('#crt_ticketsTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading tickets...</td></tr>';
+    
+    const res = await app.api('get-all-tickets');
+    if (!res.ok) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Failed to load tickets</td></tr>';
+        return;
+    }
+
+    if (!res.tickets || res.tickets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No tickets found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = res.tickets.map(t => {
+        return `
+          <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
+            <td>${t.TicketID || t.ROWID || '-'}</td>
+            <td>${new Date(t.LoggedTimeandDate).toLocaleDateString() || '-'}</td>
+            <td>${t.HotelName || '-'}</td>
+            <td>${t.Designation || '-'} (${t.Department || '-'})</td>
+            <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
+            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
+            <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">Manage</button></td>
+          </tr>
+        `;
+    }).join('');
   },
 
   adminClearDataRange: async () => {
