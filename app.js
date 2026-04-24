@@ -1,4 +1,4 @@
-const API_BASE = 'https://hr-helpdesk-60068587326.development.catalystserverless.in/server/HR_function/';
+const API_BASE = 'https://crt-helpdesk-60068587326.development.catalystserverless.in/server/CRT_function/';
 
 const app = {
   currentRole: null,
