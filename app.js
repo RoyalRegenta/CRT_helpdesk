@@ -165,7 +165,7 @@ const app = {
       alert(`Ticket Created! ID: ${res.ticketId}`);
       ['hr_hotelName', 'hr_stateName', 'hr_hrName', 'hr_hrContact', 'hr_hrEmail', 'hr_department', 'hr_designation', 'hr_numPositions', 'hr_experience'].forEach(id => app.setVal(id, ''));
     } else {
-      alert("Failed to create ticket.");
+      alert("Failed to create ticket: " + (res.error || "Unknown Error"));
     }
   },
 
