@@ -36,10 +36,14 @@ const app = {
         headers: { 'Content-Type': 'application/json', 'x-action': action },
         body: JSON.stringify(data)
       });
+      if (!res.ok) {
+        const text = await res.text();
+        return { ok: false, error: `HTTP ${res.status}: ${res.statusText}`, detail: text };
+      }
       return await res.json();
     } catch (e) {
       console.error(e);
-      return { error: 'Network Error' };
+      return { ok: false, error: 'Connection Failed', detail: e.message };
     }
   },
 
