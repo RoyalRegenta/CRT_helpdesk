@@ -278,6 +278,8 @@ app.post('*', async (req, res) => {
                 columns = ['ROWID', 'TicketID', 'Status', 'UpdatedTimeandDate']; 
             }
 
+            const updateData = { ROWID: rowId };
+
             // Filter data to ONLY include columns that actually exist in your database
             columns.forEach(f => {
                 if (data[f] !== undefined && f !== 'ROWID') {
