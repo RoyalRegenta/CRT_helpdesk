@@ -235,16 +235,16 @@ const app = {
     tbody.innerHTML = res.tickets.map(t => {
         let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
         let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
-        const remarks = fhFb.remarks || hrFb.remarks || '-';
+        const remarks = t.Remarks || fhFb.remarks || hrFb.remarks || '-';
         
         return `
           <tr style="cursor: pointer" onclick="app.setVal('admin_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('admin')">
             <td>${t.TicketID || t.ROWID || '-'}</td>
-            <td>${new Date(t.LoggedTimeandDate).toLocaleDateString() || '-'}</td>
+            <td>${new Date(t.LoggedTimeandDate).toLocaleString() || '-'}</td>
             <td>${t.HotelName || '-'}</td>
             <td>${t.Designation || '-'} (${t.Department || '-'})</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-            <td>${remarks}</td>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
             <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : '-'}</td>
             <td>
               <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="event.stopPropagation(); app.searchTicket('admin')">View</button>
@@ -316,7 +316,23 @@ const app = {
     if (detailsEl) detailsEl.innerText = details;
 
     const updatedEl = document.getElementById(`${pfx}_dispUpdated`);
-    if (updatedEl) updatedEl.innerText = `Updated: ${res.ticket.UpdatedTimeandDate || res.ticket.LoggedTimeandDate}`;
+    if (updatedEl) updatedEl.innerText = `Updated: ${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : new Date(t.LoggedTimeandDate).toLocaleString()}`;
+
+    if (pfx === 'hr') {
+      const posStrip = document.getElementById('hr_positionStrip');
+      let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
+      let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+      const currentRemarks = t.Remarks || fhFb.remarks || hrFb.remarks || '-';
+      
+      if (posStrip) {
+          posStrip.innerHTML = `
+            <div class="strip-item"><strong>Hotel</strong> <span>${t.HotelName}</span></div>
+            <div class="strip-item"><strong>Positions</strong> <span>${t.NumberOfPositions}</span></div>
+            <div class="strip-item"><strong>Remarks</strong> <span style="color:var(--text); font-weight:500;">${currentRemarks}</span></div>
+          `;
+      }
+      app.renderResumes('hr');
+    }
 
     if (pfx === 'hr') {
       const strip = document.getElementById('hr_positionStrip');
