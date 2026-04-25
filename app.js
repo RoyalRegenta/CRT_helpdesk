@@ -232,6 +232,7 @@ const app = {
         return;
     }
 
+    tbody.innerHTML = res.tickets.map(t => {
         let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
         let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
         const remarks = fhFb.remarks || hrFb.remarks || '-';
