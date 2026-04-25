@@ -360,7 +360,7 @@ const app = {
     const res = await app.api('update-ticket', t);
     app.hideLoading();
     if (res.ok) alert("Feedback saved!");
-    else alert("Failed to save feedback.");
+    else alert("Failed to save feedback: " + (res.detail || res.error));
   },
 
   crtSaveDetails: async () => {
@@ -383,7 +383,7 @@ const app = {
     const res = await app.api('update-ticket', t);
     app.hideLoading();
     if (res.ok) alert("Details updated!");
-    else alert("Update failed.");
+    else alert("Update failed: " + (res.detail || res.error));
   },
 
   adminCreateUser: async () => {
@@ -511,7 +511,10 @@ const app = {
             t.Resumes = JSON.stringify(resumes);
             app.renderResumes('crt');
             fileEl.value = '';
-        } else alert(res.error);
+            alert("File uploaded successfully! Click 'Save Details' to finalize.");
+        } else {
+            alert("Upload failed: " + (res.detail || res.error));
+        }
         app.hideLoading();
     };
     reader.readAsDataURL(file);
