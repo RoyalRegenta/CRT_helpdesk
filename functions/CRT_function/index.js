@@ -165,8 +165,7 @@ app.post('*', async (req, res) => {
         }
 
         else if (action === 'get-ticket') {
-            if (!data.ticketId) return res.json({ ok: false, error: 'Ticket ID required' });
-            const input = data.ticketId.trim().toLowerCase();
+            const input = data.ticketId.trim();
             
             // Fetch tickets using ZCQL - we try to match via ZCQL first for efficiency
             const query = `SELECT * FROM CRT_Tickets WHERE TicketID LIKE '%${input}%' OR ROWID = '${input}'`;
