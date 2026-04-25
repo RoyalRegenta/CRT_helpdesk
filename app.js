@@ -1,6 +1,6 @@
 const API_BASE = 'https://crt-helpdesk-60068587326.development.catalystserverless.in/server/CRT_function/';
 
-const app = {
+window.app = {
   currentRole: null,
   loggedInUser: null,
   currentTicketId: null,
