@@ -23,7 +23,31 @@ function safe(v, max) { return String(v || '').trim().substring(0, max); }
 app.use(express.json({ limit: '20mb' }));
 
 // Health Check
-app.get('*', (req, res) => {
+// Health Check & Download Proxy
+app.get('*', async (req, res) => {
+    const action = req.query.action || req.header('x-action');
+    
+    if (action === 'download-resume') {
+        const fileId = req.query.fileId;
+        if (!fileId) return res.status(400).send('File ID missing');
+        const FOLDER_ID = '36689000000042811';
+        try {
+            const catalyst = require('zcatalyst-sdk-node');
+            const catalystApp = catalyst.initialize(req);
+            const folder = catalystApp.filestore().folder(FOLDER_ID);
+            const fileDetails = await folder.getFileDetails(fileId);
+            const fileStream = await folder.downloadFile(fileId);
+            
+            res.setHeader('Content-Type', fileDetails.content_type || 'application/octet-stream');
+            res.setHeader('Content-Disposition', `attachment; filename="${fileDetails.file_name}"`);
+            fileStream.pipe(res);
+            return;
+        } catch (e) {
+            console.error('Download Error:', e);
+            return res.status(404).send('File not found');
+        }
+    }
+
     res.json({ ok: true, status: 'CRT_function is running' });
 });
 
