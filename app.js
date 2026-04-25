@@ -511,7 +511,8 @@ const app = {
             t.Resumes = JSON.stringify(resumes);
             app.renderResumes('crt');
             fileEl.value = '';
-            alert("File uploaded successfully! Click 'Save Details' to finalize.");
+            // Auto-save
+            app.crtSaveDetails();
         } else {
             alert("Upload failed: " + (res.detail || res.error));
         }
@@ -530,6 +531,8 @@ const app = {
     t.Resumes = JSON.stringify(resumes);
     app.renderResumes('crt');
     linkEl.value = '';
+    // Auto-save
+    app.crtSaveDetails();
   },
 
   removeResume: (idx) => {
