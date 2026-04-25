@@ -143,7 +143,7 @@ const app = {
     view.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     view.querySelectorAll('.form-panel').forEach(p => p.classList.add('hidden'));
 
-    // Highlight active button (basic substring match for simplicity)
+    // Highlight active button
     view.querySelectorAll('.tab-btn').forEach(b => {
       if (b.textContent.toLowerCase().includes(tabId.split('-')[0])) b.classList.add('active');
     });
@@ -196,7 +196,6 @@ const app = {
       app.showView(app.currentRole);
       app.switchTab(app.currentRole, app.currentRole === 'admin' ? 'tickets' : 'all-tickets');
       
-      // Load data based on role
       if (app.currentRole === 'admin') {
          app.loadAllTickets();
          app.loadAllUsers();
@@ -210,7 +209,6 @@ const app = {
 
   logout: () => {
     if (app.loggedInUser) {
-        // Send logout API request in the background
         app.api('crt-logout', { username: app.loggedInUser }).catch(e => console.error(e));
     }
     app.currentRole = null;
@@ -254,7 +252,6 @@ const app = {
     }).join('');
   },
 
-  // ─── HR ACTIONS ───
   populateDesignations: (deptId, desigId) => {
     const dept = document.getElementById(deptId).value;
     const desigSelect = document.getElementById(desigId);
@@ -280,10 +277,7 @@ const app = {
     if (!req.HotelName || !req.HREmailID || !req.Department) return alert("Fill required fields.");
 
     app.showLoading('Submitting...');
-    const res = await app.api('create-ticket', {
-      ...req,
-      Status: 'Created'
-    });
+    const res = await app.api('create-ticket', { ...req, Status: 'Created' });
     app.hideLoading();
 
     if (res.ok) {
@@ -294,12 +288,11 @@ const app = {
     }
   },
 
-  // ─── SEARCH & VIEW TICKET ───
   searchTicket: async (rolePrefix) => {
     const pfx = rolePrefix === 'unit-hr' ? 'hr' : rolePrefix === 'crt-team' ? 'crt' : 'fh';
     let tid = app.getVal(`${pfx}_searchTicket`);
     if (!tid) return;
-    tid = tid.trim(); // Remove any accidental spaces
+    tid = tid.trim();
     
     app.showLoading('Searching...');
     const res = await app.api('get-ticket', { ticketId: tid });
@@ -315,7 +308,6 @@ const app = {
     document.getElementById(`${pfx}_dispStatus`).innerText = res.ticket.Status;
     document.getElementById(`${pfx}_dispStatus`).className = `status-badge status-${res.ticket.Status.replace(/ /g, '-')}`;
 
-    // Render details
     const details = `${res.ticket.HotelName} | ${res.ticket.Designation} (${res.ticket.Department})`;
     const detailsEl = document.getElementById(`${pfx}_dispDetails`);
     if (detailsEl) detailsEl.innerText = details;
@@ -323,7 +315,6 @@ const app = {
     const updatedEl = document.getElementById(`${pfx}_dispUpdated`);
     if (updatedEl) updatedEl.innerText = `Updated: ${res.ticket.UpdatedTimeandDate || res.ticket.LoggedTimeandDate}`;
 
-    // Specific role populating
     if (pfx === 'hr') {
       const strip = document.getElementById('hr_positionStrip');
       if (strip) strip.innerHTML = `
@@ -346,12 +337,13 @@ const app = {
       app.setVal('crt_edit_designation', res.ticket.Designation);
       app.setVal('crt_edit_numPositions', res.ticket.NumberOfPositions);
       app.setVal('crt_edit_experience', res.ticket.ExperienceRequired);
+      app.setVal('crt_statusOverride', res.ticket.Status);
+      app.setVal('crt_closureAction', res.ticket.ClosureStatus || '');
     }
     
-    app.renderResumes(pfx, res.ticket.Resumes);
+    app.renderResumes(pfx);
   },
 
-  // ─── ACTIONS ───
   saveFeedback: async (pfx) => {
     const decision = app.getVal(`${pfx}_feedbackDecision`);
     const remarks = app.getVal(`${pfx}_feedbackRemarks`);
@@ -384,6 +376,8 @@ const app = {
     t.Designation = app.getVal('crt_edit_designation');
     t.NumberOfPositions = app.getVal('crt_edit_numPositions');
     t.ExperienceRequired = app.getVal('crt_edit_experience');
+    t.Status = app.getVal('crt_statusOverride');
+    t.ClosureStatus = app.getVal('crt_closureAction');
 
     app.showLoading('Updating...');
     const res = await app.api('update-ticket', t);
@@ -391,187 +385,83 @@ const app = {
     if (res.ok) alert("Details updated!");
     else alert("Update failed.");
   },
-    if (!file) return alert("Select a file");
-
-    app.showLoading('Uploading...');
-    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
-    const upRes = await app.api('upload-resume', { fileName: file.name, fileData: base64 });
-    
-    if (!upRes.ok) {
-      app.hideLoading();
-      return alert("Upload failed: " + upRes.error);
-    }
-
-    const t = app._ticketsCache[app.currentTicketId];
-    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
-    resumes.push({ type: 'file', name: file.name, fileId: upRes.fileId });
-    t.Resumes = JSON.stringify(resumes);
-    t.Status = 'Resumes Uploaded';
-
-    const saveRes = await app.api('update-ticket', t);
-    app.hideLoading();
-    if (saveRes.ok) {
-      app.searchTicket('crt-team'); // Reload view
-    } else {
-      alert("Failed to link resume to ticket");
-    }
-  },
-
-  addResumeLink: async () => {
-    const link = app.getVal('crt_newResumeLink');
-    if (!link) return alert("Paste a link");
-
-    const t = app._ticketsCache[app.currentTicketId];
-    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
-    resumes.push({ type: 'link', name: link, url: link });
-    t.Resumes = JSON.stringify(resumes);
-    t.Status = 'Resumes Uploaded';
-
-    app.showLoading('Saving...');
-    const saveRes = await app.api('update-ticket', t);
-    app.hideLoading();
-    
-    if (saveRes.ok) {
-      app.setVal('crt_newResumeLink', '');
-      app.searchTicket('crt-team');
-    }
-  },
-
-  closeTicket: async () => {
-    const action = app.getVal('crt_closureAction');
-    const status = app.getVal('crt_statusOverride');
-    const t = app._ticketsCache[app.currentTicketId];
-    if (!t) return;
-
-    if (action) t.ClosureStatus = action;
-    if (status) t.Status = status;
-    if (action === 'Position Filled' || action === 'Cancelled') t.Status = 'Closed';
-
-    app.showLoading('Closing...');
-    const res = await app.api('update-ticket', t);
-    app.hideLoading();
-    if (res.ok) {
-      alert("Ticket updated!");
-      app.searchTicket('crt-team');
-    }
-  },
 
   adminCreateUser: async () => {
     const username = app.getVal('admin_newUsername');
     const password = app.getVal('admin_newPassword');
+    if (!username || !password) return alert("Enter credentials.");
     
-    if (!username || !password) return alert("Please enter both username and password.");
-    
-    app.showLoading("Creating User...");
+    app.showLoading("Creating...");
     const res = await app.api('admin-create-user', { username, password });
     app.hideLoading();
-    
     if (res.ok) {
-        alert("User successfully created!");
+        alert("User created!");
         app.setVal('admin_newUsername', '');
         app.setVal('admin_newPassword', '');
-        app.loadAllUsers(); // Refresh the users table
-    } else {
-        alert("Failed to create user: " + (res.error || "Unknown Error"));
-    }
+        app.loadAllUsers();
+    } else alert(res.error);
   },
 
   loadAllUsers: async () => {
     const tbody = document.querySelector('#admin_usersTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading users...</td></tr>';
-    
     const res = await app.api('admin-get-users');
-    if (!res.ok) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Failed to load users</td></tr>';
-        return;
-    }
+    if (!res.ok) return;
 
-    const filteredUsers = (res.users || []).filter(u => u.UserName !== 'it@royalorchidhotels.com');
-
-    if (filteredUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No active users found.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = filteredUsers.map(u => `
+    const filtered = (res.users || []).filter(u => u.UserName !== 'it@royalorchidhotels.com');
+    tbody.innerHTML = filtered.map(u => `
       <tr>
         <td>${u.UserName || '-'}</td>
         <td>${new Date(u.CREATEDTIME).toLocaleDateString() || '-'}</td>
         <td>${u.LoggedinTimeandDate ? new Date(u.LoggedinTimeandDate).toLocaleString() : 'Never'}</td>
         <td>${u.LoggedoutTimeandDate ? new Date(u.LoggedoutTimeandDate).toLocaleString() : 'N/A'}</td>
         <td style="text-align:right;">
-          <button class="btn btn-secondary" style="border-color:var(--urgent); color:var(--urgent); padding:4px 12px; font-size:11px;" onclick="app.adminDeleteUser('${u.ROWID}', '${u.UserName}')">Delete</button>
+          <button class="btn btn-secondary" onclick="app.adminDeleteUser('${u.ROWID}', '${u.UserName}')">Delete</button>
         </td>
       </tr>
     `).join('');
   },
 
   adminDeleteUser: async (userId, username) => {
-    if (username === 'it@royalorchidhotels.com') return alert("Cannot delete the super admin account.");
-    if (!confirm(`Are you sure you want to delete user '${username}'?`)) return;
-    app.showLoading("Deleting User...");
+    if (!confirm(`Delete user ${username}?`)) return;
+    app.showLoading("Deleting...");
     const res = await app.api('admin-delete-user', { userId });
     app.hideLoading();
-    if (res.ok) {
-        app.loadAllUsers();
-    } else {
-        alert("Failed to delete user: " + (res.error || "Unknown Error"));
-    }
+    if (res.ok) app.loadAllUsers();
   },
 
   loadCrtTickets: async () => {
     const tbody = document.querySelector('#crt_ticketsTable tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading tickets...</td></tr>';
-    
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
     const res = await app.api('get-all-tickets');
-    if (!res.ok) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Failed to load tickets</td></tr>';
-        return;
-    }
+    if (!res.ok) return;
 
-    if (!res.tickets || res.tickets.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No tickets found.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = res.tickets.map(t => {
-        return `
-          <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
-            <td>${t.TicketID || t.ROWID || '-'}</td>
-            <td>${new Date(t.LoggedTimeandDate).toLocaleDateString() || '-'}</td>
-            <td>${t.HotelName || '-'}</td>
-            <td>${t.Designation || '-'} (${t.Department || '-'})</td>
-            <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
-            <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">Manage</button></td>
-          </tr>
-        `;
-    }).join('');
+    tbody.innerHTML = res.tickets.map(t => `
+      <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
+        <td>${t.TicketID || t.ROWID || '-'}</td>
+        <td>${new Date(t.LoggedTimeandDate).toLocaleDateString() || '-'}</td>
+        <td>${t.HotelName || '-'}</td>
+        <td>${t.Designation || '-'} (${t.Department || '-'})</td>
+        <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
+        <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
+        <td><button class="btn btn-secondary">Manage</button></td>
+      </tr>
+    `).join('');
   },
 
   adminClearDataRange: async () => {
-    const startDate = app.getVal('admin_maintenance_start');
-    const endDate = app.getVal('admin_maintenance_end');
-    
-    if (!startDate || !endDate) return alert("Please select both a Start Date and an End Date.");
-    
-    if (!confirm(`WARNING: Are you sure you want to permanently delete all tickets from ${startDate} to ${endDate}? This action cannot be undone.`)) {
-        return;
-    }
-    
-    app.showLoading("Deleting data... Please wait.");
-    const res = await app.api('admin-clear-data', { startDate, endDate });
+    const start = app.getVal('admin_maintenance_start');
+    const end = app.getVal('admin_maintenance_end');
+    if (!start || !end) return alert("Select dates.");
+    if (!confirm("Permanently delete data?")) return;
+    app.showLoading("Deleting...");
+    const res = await app.api('admin-clear-data', { startDate: start, endDate: end });
     app.hideLoading();
-    
     if (res.ok) {
-        alert(`Successfully deleted ${res.deleted} tickets!`);
-        app.setVal('admin_maintenance_start', '');
-        app.setVal('admin_maintenance_end', '');
-        app.loadAllTickets(); // Refresh table
-    } else {
-        alert("Failed to delete data: " + (res.error || "Unknown Error"));
+        alert(`Deleted ${res.deleted} records.`);
+        app.loadAllTickets();
     }
   },
 
@@ -579,12 +469,7 @@ const app = {
   renderResumes: (pfx) => {
     const t = app._ticketsCache[app.currentTicketId];
     if (!t) return;
-    
-    let resumes = [];
-    try {
-        resumes = typeof t.Resumes === 'string' ? JSON.parse(t.Resumes || '[]') : (t.Resumes || []);
-    } catch(e) { resumes = []; }
-
+    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
     const listEl = document.getElementById(`${pfx}_resumeList`);
     if (!listEl) return;
 
@@ -613,37 +498,20 @@ const app = {
 
   addResumeFile: async () => {
     const fileEl = document.getElementById('crt_newResumeFile');
-    if (!fileEl || !fileEl.files[0]) return alert("Please select a file first.");
-    
+    if (!fileEl || !fileEl.files[0]) return alert("Select a file.");
     const file = fileEl.files[0];
     const reader = new FileReader();
-    
-    app.showLoading("Uploading Resume...");
+    app.showLoading("Uploading...");
     reader.onload = async (e) => {
-        const res = await app.api('upload-resume', {
-            fileName: file.name,
-            fileData: e.target.result
-        });
-        
+        const res = await app.api('upload-resume', { fileName: file.name, fileData: e.target.result });
         if (res.ok) {
             const t = app._ticketsCache[app.currentTicketId];
-            let resumes = [];
-            try { resumes = typeof t.Resumes === 'string' ? JSON.parse(t.Resumes || '[]') : (t.Resumes || []); } catch(e){}
-            
-            resumes.push({
-                type: 'file',
-                name: file.name,
-                fileId: res.fileId,
-                date: new Date().toLocaleDateString()
-            });
-            
+            let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+            resumes.push({ type: 'file', name: file.name, fileId: res.fileId, date: new Date().toLocaleDateString() });
             t.Resumes = JSON.stringify(resumes);
             app.renderResumes('crt');
             fileEl.value = '';
-            alert("File uploaded successfully! Click 'Save Details' to finalize.");
-        } else {
-            alert("Upload failed: " + res.error);
-        }
+        } else alert(res.error);
         app.hideLoading();
     };
     reader.readAsDataURL(file);
@@ -651,20 +519,11 @@ const app = {
 
   addResumeLink: () => {
     const linkEl = document.getElementById('crt_newResumeLink');
-    const url = linkEl ? linkEl.value.trim() : "";
-    if (!url) return alert("Please enter a URL.");
-
+    const url = linkEl?.value.trim();
+    if (!url) return alert("Enter URL.");
     const t = app._ticketsCache[app.currentTicketId];
-    let resumes = [];
-    try { resumes = typeof t.Resumes === 'string' ? JSON.parse(t.Resumes || '[]') : (t.Resumes || []); } catch(e){}
-    
-    resumes.push({
-        type: 'link',
-        name: 'External Link',
-        url: url,
-        date: new Date().toLocaleDateString()
-    });
-    
+    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+    resumes.push({ type: 'link', name: 'External Link', url: url, date: new Date().toLocaleDateString() });
     t.Resumes = JSON.stringify(resumes);
     app.renderResumes('crt');
     linkEl.value = '';
@@ -672,22 +531,18 @@ const app = {
 
   removeResume: (idx) => {
     const t = app._ticketsCache[app.currentTicketId];
-    let resumes = [];
-    try { resumes = typeof t.Resumes === 'string' ? JSON.parse(t.Resumes || '[]') : (t.Resumes || []); } catch(e){}
+    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
     resumes.splice(idx, 1);
     t.Resumes = JSON.stringify(resumes);
     app.renderResumes('crt');
   },
 
   downloadFile: async (fileId, fileName) => {
-    app.showLoading("Preparing Download...");
+    app.showLoading("Preparing...");
     const res = await app.api('get-resume-url', { fileId });
     app.hideLoading();
-    if (res.ok && res.url) {
-        window.open(res.url, '_blank');
-    } else {
-        alert("Failed to get download link.");
-    }
+    if (res.ok && res.url) window.open(res.url, '_blank');
+    else alert("Failed to download.");
   }
 };
 
@@ -698,4 +553,3 @@ window.onload = () => {
   document.head.appendChild(fontLink);
   app.showView('role-selector');
 };
-
