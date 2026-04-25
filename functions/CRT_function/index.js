@@ -266,7 +266,7 @@ app.post('*', async (req, res) => {
             const allowedFields = [
                 'HotelName', 'StateName', 'HRContactName', 'HRContactNumber', 'HREmailID',
                 'Department', 'Designation', 'NumberOfPositions', 'ExperienceRequired',
-                'Status', 'ClosureStatus', 'HrFeedBack', 'FhFeedBack', 'Resumes', 'Remarks', 'UpdatedTimeandDate'
+                'Status', 'HrFeedBack', 'FhFeedBack', 'Resumes', 'UpdatedTimeandDate'
             ];
             
             allowedFields.forEach(f => {
