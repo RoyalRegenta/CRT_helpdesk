@@ -129,8 +129,8 @@ var app = {
 
   setRole: (role) => {
     app.currentRole = role;
-    if (role === 'unit-hr') {
-      app.showView('unit-hr');
+    if (role === 'unit-hr' || role === 'functional-head') {
+      app.showView(role);
     } else {
       document.getElementById('login_title').innerText = role === 'admin' ? 'Admin Login' : 'CRT Team Login';
       document.getElementById('login_id_label').innerText = role === 'admin' ? 'Email ID' : 'Username';
