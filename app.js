@@ -127,6 +127,50 @@ var app = {
     if (tabId === 'users') app.loadAllUsers();
   },
 
+  setRole: (role) => {
+    app.currentRole = role;
+    if (role === 'unit-hr') {
+      app.showView('unit-hr');
+    } else {
+      document.getElementById('login_title').innerText = role === 'admin' ? 'Admin Login' : 'CRT Team Login';
+      document.getElementById('login_id_label').innerText = role === 'admin' ? 'Email ID' : 'Username';
+      app.showView('login');
+    }
+  },
+
+  sendOTP: async () => {
+    const id = app.getVal('login_username');
+    if (!id) return alert("Enter " + (app.currentRole === 'admin' ? "Email" : "Username"));
+
+    app.showLoading("Sending OTP...");
+    const res = await app.api('crt-send-otp', { id, role: app.currentRole });
+    app.hideLoading();
+
+    if (res.ok) {
+      alert("OTP sent to your registered email!");
+      document.getElementById('otp_block').classList.remove('hidden');
+    } else {
+      alert(res.error || "User not found or error sending OTP");
+    }
+  },
+
+  handleLogin: async () => {
+    const id = app.getVal('login_username');
+    const otp = app.getVal('login_otp');
+    if (!otp) return alert("Enter OTP");
+
+    app.showLoading("Verifying...");
+    const res = await app.api('crt-verify-otp', { id, otp, role: app.currentRole });
+    app.hideLoading();
+
+    if (res.ok) {
+      app.loggedInUser = id;
+      app.showView(app.currentRole);
+    } else {
+      alert(res.error || "Invalid OTP");
+    }
+  },
+
   login: async (role) => {
     const username = app.getVal(`${role}-username`);
     const password = app.getVal(`${role}-password`);
