@@ -1,0 +1,29 @@
+{
+  "defaults": {
+    "project": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "36689000000042028",
+      "name": "CRT-helpdesk",
+      "domain": {
+        "id": "50041500761",
+        "name": "crt-helpdesk-60068587326.development"
+      },
+      "timezone": "Asia/Kolkata",
+      "env": [
+        {
+          "idx": 1,
+          "id": "60068587326",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}

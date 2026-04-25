@@ -246,7 +246,10 @@ const app = {
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
             <td>${remarks}</td>
             <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
-            <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">View</button></td>
+            <td>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="event.stopPropagation(); app.searchTicket('admin')">View</button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px; border-color:var(--urgent); color:var(--urgent);" onclick="event.stopPropagation(); app.adminDeleteTicket('${t.ROWID}', '${t.TicketID}')">Delete</button>
+            </td>
           </tr>
         `;
     }).join('');
@@ -431,24 +434,45 @@ const app = {
     if (res.ok) app.loadAllUsers();
   },
 
+  adminDeleteTicket: async (rowId, ticketId) => {
+    if (!confirm(`Permanently delete ticket ${ticketId}?`)) return;
+    app.showLoading("Deleting...");
+    const res = await app.api('admin-clear-data', { rowId: rowId });
+    app.hideLoading();
+    if (res.ok) app.loadAllTickets();
+    else alert(res.error);
+  },
+
   loadCrtTickets: async () => {
     const tbody = document.querySelector('#crt_ticketsTable tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Loading...</td></tr>';
     const res = await app.api('get-all-tickets');
     if (!res.ok) return;
 
-    tbody.innerHTML = res.tickets.map(t => `
-      <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
-        <td>${t.TicketID || t.ROWID || '-'}</td>
-        <td>${new Date(t.LoggedTimeandDate).toLocaleDateString() || '-'}</td>
-        <td>${t.HotelName || '-'}</td>
-        <td>${t.Designation || '-'} (${t.Department || '-'})</td>
-        <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-        <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
-        <td><button class="btn btn-secondary">Manage</button></td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = res.tickets.map(t => {
+        let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
+        let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+        let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+        
+        const remarks = fhFb.remarks || hrFb.remarks || '-';
+        const resumeCount = resumes.length;
+        
+        return `
+          <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
+            <td>${t.TicketID || t.ROWID || '-'}</td>
+            <td>${new Date(t.LoggedTimeandDate).toLocaleDateString() || '-'}</td>
+            <td>${t.HotelName || '-'}</td>
+            <td>${t.Designation || '-'} (${t.Department || '-'})</td>
+            <td>${t.NumberOfPositions || '0'}</td>
+            <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
+            <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
+            <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
+            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
+            <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">Manage</button></td>
+          </tr>
+        `;
+    }).join('');
   },
 
   adminClearDataRange: async () => {
