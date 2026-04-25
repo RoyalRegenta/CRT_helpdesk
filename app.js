@@ -355,15 +355,23 @@ const app = {
     const t = app._ticketsCache[app.currentTicketId];
     if (!t) return;
 
-    if (pfx === 'hr') t.HrFeedBack = JSON.stringify({ decision, remarks });
-    if (pfx === 'fh') t.FhFeedBack = JSON.stringify({ decision, remarks });
-    if (decision) t.Status = 'Interview Completed';
+    if (pfx === 'hr') {
+        t.HrFeedBack = JSON.stringify({ decision, remarks });
+        if (decision === 'Forward to Functional Head') t.Status = 'Pending Review';
+        else if (decision) t.Status = 'Interview Completed';
+    }
+    if (pfx === 'fh') {
+        t.FhFeedBack = JSON.stringify({ decision, remarks });
+        if (decision) t.Status = 'Closure Pending';
+    }
 
     app.showLoading('Saving...');
     const res = await app.api('update-ticket', t);
     app.hideLoading();
-    if (res.ok) alert("Feedback saved!");
-    else alert("Failed to save feedback: " + (res.detail || res.error));
+    if (res.ok) {
+        alert("Feedback saved!");
+        app.searchTicket(pfx === 'hr' ? 'unit-hr' : 'functional-head');
+    } else alert("Failed to save feedback: " + (res.detail || res.error));
   },
 
   crtSaveDetails: async () => {
@@ -385,8 +393,15 @@ const app = {
     app.showLoading('Updating...');
     const res = await app.api('update-ticket', t);
     app.hideLoading();
-    if (res.ok) alert("Details updated!");
-    else alert("Update failed: " + (res.detail || res.error));
+    if (res.ok) {
+        alert("Details updated!");
+        app.searchTicket('crt-team');
+    } else alert("Update failed: " + (res.detail || res.error));
+  },
+
+  closeTicket: async () => {
+    // This handles the "Update Ticket Status" button in CRT view
+    await app.crtSaveDetails();
   },
 
   adminCreateUser: async () => {
