@@ -165,25 +165,18 @@ app.post('*', async (req, res) => {
         }
 
         else if (action === 'get-ticket') {
-            const input = data.ticketId.trim();
+            const tid = String(data.ticketId || '').trim();
+            if (!tid) return res.json({ ok: false, error: 'Ticket ID required' });
             
-            // Fetch tickets using ZCQL - we try to match via ZCQL first for efficiency
-            const query = `SELECT * FROM CRT_Tickets WHERE TicketID LIKE '%${input}%' OR ROWID = '${input}'`;
+            console.log(`Searching for Ticket: [${tid}]`);
+
+            // Tier 1: Exact or Case-Insensitive LIKE Match via ZCQL
+            const query = `SELECT * FROM CRT_Tickets WHERE TicketID = '${tid}' OR TicketID LIKE '%${tid}%' OR ROWID = '${tid}'`;
             let results = [];
             try {
                 results = await catalystApp.zcql().executeZCQLQuery(query);
             } catch (e) {
-                // If query fails (maybe table name alias issue), fallback to getting all and filtering
-                const fallbackResults = await catalystApp.zcql().executeZCQLQuery("SELECT * FROM CRT_Tickets");
-                if (fallbackResults && fallbackResults.length > 0) {
-                    const tableName = Object.keys(fallbackResults[0])[0];
-                    const match = fallbackResults.find(r => {
-                        const t = r[tableName];
-                        return (t.TicketID && t.TicketID.toLowerCase().includes(input)) || 
-                               (t.ROWID && t.ROWID.toString() === input);
-                    });
-                    if (match) results = [match];
-                }
+                console.error("ZCQL Search Error:", e);
             }
 
             if (results && results.length > 0) {
@@ -191,7 +184,30 @@ app.post('*', async (req, res) => {
                 const tableName = Object.keys(firstRow)[0];
                 return res.json({ ok: true, ticket: firstRow[tableName] });
             }
-            return res.json({ ok: false, error: 'Ticket not found' });
+
+            // Tier 2: Bulletproof Fallback - Fetch all and filter in JS
+            console.log("Tier 1 failed. Falling back to full scan...");
+            try {
+                const allResults = await catalystApp.zcql().executeZCQLQuery("SELECT * FROM CRT_Tickets");
+                if (allResults && allResults.length > 0) {
+                    const tableName = Object.keys(allResults[0])[0];
+                    const match = allResults.find(r => {
+                        const t = r[tableName];
+                        const dbId = String(t.TicketID || '').trim().toLowerCase();
+                        const searchId = tid.toLowerCase();
+                        return dbId === searchId || dbId.includes(searchId) || String(t.ROWID) === tid;
+                    });
+                    
+                    if (match) {
+                        console.log("Match found in Tier 2 scan.");
+                        return res.json({ ok: true, ticket: match[tableName] });
+                    }
+                }
+            } catch (fallbackErr) {
+                console.error("Full scan error:", fallbackErr);
+            }
+
+            return res.json({ ok: false, error: `Ticket not found: ${tid}` });
         }
 
         else if (action === 'get-all-tickets') {
