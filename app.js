@@ -104,7 +104,7 @@ const app = {
 
   api: async (action, data = {}) => {
     try {
-      const res = await fetch(API_BASE, {
+      const res = await fetch(`${API_BASE}?action=${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-action': action },
         body: JSON.stringify(data)
@@ -129,11 +129,11 @@ const app = {
     const logoutBtn = document.getElementById('logoutBtn');
 
     if (viewId === 'role-selector' || viewId === 'login') {
-      roleBadge.style.display = 'none';
-      logoutBtn.classList.add('hidden');
+      if (roleBadge) roleBadge.style.display = 'none';
+      if (logoutBtn) logoutBtn.classList.add('hidden');
     } else {
-      roleBadge.style.display = 'flex';
-      logoutBtn.classList.toggle('hidden', viewId === 'unit-hr' || viewId === 'functional-head');
+      if (roleBadge) roleBadge.style.display = 'flex';
+      if (logoutBtn) logoutBtn.classList.toggle('hidden', viewId === 'unit-hr' || viewId === 'functional-head');
     }
   },
 
