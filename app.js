@@ -1,6 +1,6 @@
 const API_BASE = 'https://crt-helpdesk-60068587326.development.catalystserverless.in/server/CRT_function/';
 
-const app = {
+var app = {
   currentRole: null,
   loggedInUser: null,
   currentTicketId: null,
@@ -48,162 +48,100 @@ const app = {
       'Store In-charge', 'Purchase Supervisor'
     ],
     'SPA': [
-      'SPA Receptionist', 'SPA Manager'
+      'Spa Manager', 'Spa Executive', 'Spa Therapist', 'Nail Technician', 
+      'Spa supervisor'
     ],
     'Sales': [
-      'Director of Sales', 'Assistant Director of Sales', 'Marcom Manager', 
-      'Sales Manager', 'Assistant Sales Manager', 'Sales Executive', 
-      'Sales Coordinator', 'Social Media Executive', 'Loyalty Manager', 
-      'Senior Sales Manager', 'Associate Director of Sales', 'Banquets Sales Manager'
+      'Regional Sales Manager', 'Sales Manager', 'Assistant Sales Manager', 
+      'Sales Executive', 'Sales Coordinator', 'Revenue Manager', 
+      'Asst Revenue Manager', 'Digital Marketing Executive', 'Digital Marketing Manager', 
+      'Graphic Designer', 'Director Sales and Marketing'
     ],
     'Reservation': [
       'Reservation Manager', 'Reservation Executive', 'Reservation Supervisor', 
-      'Reservation Associate', 'Activity Manager', 'Activity Executive'
+      'Asst. Reservation Manager'
     ],
     'F&B Production': [
-      'Executive Chef', 'Bakery & Pastry Chef', 'Executive Sous Chef', 
-      'Sous Chef', 'Senior Chef de Partie (Sr. CDP)', 'Chef De Partie', 
-      'Demi Chef de Partie', 'Commis I', 'Butcher', 'Kitchen Stewarding Supervisor', 
-      'Asst. Kitchen Stewarding Manager', 'Commis II', 'Commis III', 
-      'Kitchen Stewarding Associate', 'Senior Sous Chef', 'Junior Sous Chef', 
-      'KST Executive', 'KST Supervisor', 'Kitchen Stewarding Manager'
+      'Executive Chef', 'Sous Chef', 'Commis I', 'Commis II', 'Commis III', 
+      'Kitchen Helper', 'Pastry Chef', 'CDP', 'DCDP', 'Executive Sous Chef', 
+      'Jr. Sous Chef', 'KST Executive', 'KST Supervisor', 'Utility'
     ],
     'Finance': [
-      'Unit Finance Controller', 'Finance Manager', 'Assistant Manager Accounts', 
-      'Credit Manager', 'Food & Beverage Controller', 'Director of Finance', 
-      'Finance Executive', 'Finance Associate', 'Accounts Receivable', 
-      'Accounts Payable', 'Regional Finance Controller'
+      'Financial Controller', 'Finance Manager', 'Asst. Manager Finance', 
+      'Accounts Executive', 'Accounts Assistant', 'General Cashier', 
+      'Cost Controller', 'Accounts Supervisor', 'Purchase Manager'
     ],
     'Security': [
-      'Security Supervisor', 'Security Manager', 'Assistant Manager Security', 
-      'Chief Security Officer', 'Security Guard', 'Driver / Chauffeur'
+      'Security Manager', 'Asst. Manager Security', 'Security Supervisor', 
+      'Security Guard', 'Security In-charge'
     ],
     'Human Resource': [
-      'Director of Human Resource', 'Assistant Human Resource Manager', 'HR Assistant', 
-      'Human Resource Executive', 'Associate Director of Human Resource', 
-      'Human Resource Manager', 'Human Resource Coordinator', 'Human Resource Assistant', 
-      'Training Manager', 'Training Executive', 'Training Associate', 
-      'HR Supervisor', 'Cluster HR Manager'
+      'Director Human Resource', 'Human Resource Manager', 'Assistant Manager HR', 
+      'HR Executive', 'HR Coordinator', 'Training Manager', 'Training Associate'
     ],
     'Information Technology': [
-      'IT Manager', 'IT Executive', 'IT Assistant'
+      'Assistant Manager IT', 'IT Executive', 'IT Manager', 'IT Supervisor'
     ]
   },
 
-  // ─── UTILS ───
-  getVal: (id) => document.getElementById(id)?.value.trim() || '',
-  setVal: (id, val) => { const el = document.getElementById(id); if (el) el.value = val; },
-  showLoading: (msg = 'Processing...') => {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-      overlay.querySelector('.loading-text').innerText = msg;
-      overlay.classList.add('visible');
-    }
-  },
-  hideLoading: () => document.getElementById('loadingOverlay')?.classList.remove('visible'),
+  getVal: id => document.getElementById(id)?.value || '',
+  setVal: (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; },
 
   api: async (action, data = {}) => {
     try {
-      const res = await fetch(API_BASE, {
+      const response = await fetch(API_BASE + '?action=' + action, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-action': action },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!res.ok) {
-        const text = await res.text();
-        return { ok: false, error: `HTTP ${res.status}: ${res.statusText}`, detail: text };
-      }
-      return await res.json();
-    } catch (e) {
-      console.error(e);
-      return { ok: false, error: 'Connection Failed', detail: e.message };
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      return { ok: false, error: 'Network or Server Error' };
     }
   },
 
-  // ─── ROUTING ───
+  showLoading: (msg) => {
+    document.querySelector('.loading-text').innerText = msg || 'Processing...';
+    document.getElementById('loadingOverlay').classList.add('active');
+  },
+  hideLoading: () => {
+    document.getElementById('loadingOverlay').classList.remove('active');
+  },
+
   showView: (viewId) => {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById(`view-${viewId}`)?.classList.add('active');
-
-    const roleBadge = document.getElementById('roleBadge');
-    const logoutBtn = document.getElementById('logoutBtn');
-
-    if (viewId === 'role-selector' || viewId === 'login') {
-      roleBadge.style.display = 'none';
-      logoutBtn.classList.add('hidden');
-    } else {
-      roleBadge.style.display = 'flex';
-      logoutBtn.classList.toggle('hidden', viewId === 'unit-hr' || viewId === 'functional-head');
-    }
+    document.getElementById(`view-${viewId}`).classList.add('active');
+    if (viewId === 'admin') app.loadAllTickets();
+    if (viewId === 'crt-team') app.loadCrtTickets();
   },
 
   switchTab: (role, tabId) => {
-    const view = document.getElementById(`view-${role}`);
-    if (!view) return;
-    view.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    view.querySelectorAll('.form-panel').forEach(p => p.classList.add('hidden'));
-
-    // Highlight active button
-    view.querySelectorAll('.tab-btn').forEach(b => {
-      if (b.textContent.toLowerCase().includes(tabId.split('-')[0])) b.classList.add('active');
-    });
+    document.querySelectorAll(`#view-${role} .tab-btn`).forEach(b => b.classList.remove('active'));
+    document.querySelectorAll(`#view-${role} .form-panel`).forEach(p => p.classList.add('hidden'));
     
-    document.getElementById(`tab-${role}-${tabId}`)?.classList.remove('hidden');
+    event.currentTarget?.classList.add('active');
+    document.getElementById(`tab-${role}-${tabId}`).classList.remove('hidden');
+    
+    if (tabId === 'all-tickets') app.loadCrtTickets();
+    if (tabId === 'users') app.loadAllUsers();
   },
 
-  // ─── AUTHENTICATION ───
-  setRole: (role) => {
-    app.currentRole = role;
-    if (role === 'admin' || role === 'crt-team') {
-      app.showView('login');
-      document.getElementById('login_title').innerText = role === 'admin' ? 'Admin Login' : 'CRT Login';
-    } else {
-      document.getElementById('currentRoleDisplay').innerText = role === 'unit-hr' ? 'Unit HR' : 'Functional Head';
+  login: async (role) => {
+    const username = app.getVal(`${role}-username`);
+    const password = app.getVal(`${role}-password`);
+    if (!username || !password) return alert("Enter credentials.");
+
+    app.showLoading('Logging in...');
+    const res = await app.api('crt-login', { username, password });
+    app.hideLoading();
+
+    if (res.ok) {
+      app.currentRole = role;
+      app.loggedInUser = username;
       app.showView(role);
-      if (role === 'unit-hr') app.switchTab('unit-hr', 'create-request');
-    }
-  },
-
-  sendOTP: async () => {
-    const user = app.getVal('login_username');
-    const pass = app.getVal('login_password');
-    if (!user || !pass) return alert("Enter credentials first.");
-
-    app.showLoading('Sending OTP...');
-    const res = await app.api('send-otp', { username: user, password: pass });
-    app.hideLoading();
-
-    if (res.ok) {
-      document.getElementById('otp_block').classList.remove('hidden');
     } else {
-      alert(res.error || "Failed to send OTP.");
-    }
-  },
-
-  handleLogin: async () => {
-    const user = app.getVal('login_username');
-    const pass = app.getVal('login_password');
-    const otp = app.getVal('login_otp');
-    if (!user || !pass || !otp) return alert("Complete all fields.");
-
-    app.showLoading('Authenticating...');
-    const res = await app.api('crt-login', { username: user, password: pass, otp });
-    app.hideLoading();
-
-    if (res.ok) {
-      app.loggedInUser = user;
-      document.getElementById('currentRoleDisplay').innerText = app.currentRole === 'admin' ? 'Admin' : 'CRT Team';
-      app.showView(app.currentRole);
-      app.switchTab(app.currentRole, app.currentRole === 'admin' ? 'tickets' : 'all-tickets');
-      
-      if (app.currentRole === 'admin') {
-         app.loadAllTickets();
-         app.loadAllUsers();
-      } else if (app.currentRole === 'crt-team') {
-         app.loadCrtTickets();
-      }
-    } else {
-      alert(res.error || "Login Failed.");
+      alert("Login failed: " + (res.error || "Unknown error"));
     }
   },
 
@@ -256,8 +194,12 @@ const app = {
   },
 
   populateDesignations: (deptId, desigId) => {
-    const dept = document.getElementById(deptId).value;
+    const deptEl = document.getElementById(deptId);
+    if (!deptEl) return;
+    const dept = deptEl.value;
     const desigSelect = document.getElementById(desigId);
+    if (!desigSelect) return;
+    
     desigSelect.innerHTML = '<option value="">Select designation</option>';
     (app.deptDesignations[dept] || []).forEach(d => {
       desigSelect.innerHTML += `<option value="${d}">${d}</option>`;
@@ -303,28 +245,28 @@ const app = {
 
     if (!res.ok) return alert("Ticket not found.");
     
-    app.currentTicketId = res.ticket.TicketID;
-    app._ticketsCache[app.currentTicketId] = res.ticket;
+    const t = res.ticket;
+    app.currentTicketId = t.TicketID;
+    app._ticketsCache[app.currentTicketId] = t;
     
     document.getElementById(`${pfx}_ticketDetails`)?.classList.remove('hidden');
-    document.getElementById(`${pfx}_dispId`).innerText = res.ticket.TicketID;
-    document.getElementById(`${pfx}_dispStatus`).innerText = res.ticket.Status;
-    document.getElementById(`${pfx}_dispStatus`).className = `status-badge status-${res.ticket.Status.replace(/ /g, '-')}`;
+    document.getElementById(`${pfx}_dispId`).innerText = t.TicketID;
+    document.getElementById(`${pfx}_dispStatus`).innerText = t.Status;
+    document.getElementById(`${pfx}_dispStatus`).className = `status-badge status-${t.Status.replace(/ /g, '-')}`;
 
-    const details = `${res.ticket.HotelName} | ${res.ticket.Designation} (${res.ticket.Department})`;
+    const details = `${t.HotelName} | ${t.Designation} (${t.Department})`;
     const detailsEl = document.getElementById(`${pfx}_dispDetails`);
     if (detailsEl) detailsEl.innerText = details;
 
-    const t = res.ticket;
     const updatedEl = document.getElementById(`${pfx}_dispUpdated`);
     if (updatedEl) updatedEl.innerText = `Updated: ${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : new Date(t.LoggedTimeandDate).toLocaleString()}`;
 
+    let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
+    let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+    const currentRemarks = fhFb.remarks || hrFb.remarks || '-';
+
     if (pfx === 'hr') {
       const posStrip = document.getElementById('hr_positionStrip');
-      let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
-      let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
-      const currentRemarks = fhFb.remarks || hrFb.remarks || '-';
-      
       if (posStrip) {
           posStrip.innerHTML = `
             <div class="strip-item"><strong>Hotel</strong> <span>${t.HotelName}</span></div>
@@ -337,18 +279,23 @@ const app = {
     }
 
     if (pfx === 'crt') {
-      app.setVal('crt_edit_hotelName', res.ticket.HotelName);
-      app.setVal('crt_edit_stateName', res.ticket.StateName);
-      app.setVal('crt_edit_hrName', res.ticket.HRContactName);
-      app.setVal('crt_edit_hrContact', res.ticket.HRContactNumber);
-      app.setVal('crt_edit_hrEmail', res.ticket.HREmailID);
-      app.setVal('crt_edit_department', res.ticket.Department);
+      app.setVal('crt_edit_hotelName', t.HotelName);
+      app.setVal('crt_edit_stateName', t.StateName);
+      app.setVal('crt_edit_hrName', t.HRContactName);
+      app.setVal('crt_edit_hrContact', t.HRContactNumber);
+      app.setVal('crt_edit_hrEmail', t.HREmailID);
+      app.setVal('crt_edit_department', t.Department);
       app.populateDesignations('crt_edit_department', 'crt_edit_designation');
-      app.setVal('crt_edit_designation', res.ticket.Designation);
-      app.setVal('crt_edit_numPositions', res.ticket.NumberOfPositions);
-      app.setVal('crt_edit_experience', res.ticket.ExperienceRequired);
-      app.setVal('crt_statusOverride', res.ticket.Status);
-      app.setVal('crt_closureAction', res.ticket.ClosureStatus || '');
+      app.setVal('crt_edit_designation', t.Designation);
+      app.setVal('crt_edit_numPositions', t.NumberOfPositions);
+      app.setVal('crt_edit_experience', t.ExperienceRequired);
+      app.setVal('crt_statusOverride', t.Status);
+      app.setVal('crt_closureAction', t.ClosureStatus || '');
+    }
+
+    if (pfx === 'fh') {
+      app.setVal('fh_feedbackDecision', fhFb.decision || '');
+      app.setVal('fh_feedbackRemarks', fhFb.remarks || '');
     }
     
     app.renderResumes(pfx);
@@ -376,15 +323,47 @@ const app = {
     const res = await app.api('update-ticket', t);
     app.hideLoading();
     if (res.ok) {
-        alert("Feedback saved!");
+        alert("Evaluation saved!");
         app.searchTicket(pfx === 'hr' ? 'unit-hr' : 'functional-head');
-    } else alert("Failed to save feedback: " + (res.detail || res.error));
+    } else alert(res.error);
+  },
+
+  loadCrtTickets: async () => {
+    const tbody = document.querySelector('#crt_ticketsTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Loading tickets...</td></tr>';
+    
+    const res = await app.api('get-all-tickets');
+    if (!res.ok) return;
+
+    tbody.innerHTML = res.tickets.map(t => {
+        let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+        const resumeCount = resumes.length;
+        let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
+        let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+        const remarks = fhFb.remarks || hrFb.remarks || '-';
+
+        return `
+          <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
+            <td>${t.TicketID || t.ROWID || '-'}</td>
+            <td>${new Date(t.LoggedTimeandDate).toLocaleString() || '-'}</td>
+            <td>${t.HotelName || '-'}</td>
+            <td>${t.Designation || '-'} (${t.Department || '-'})</td>
+            <td>${t.NumberOfPositions || '0'}</td>
+            <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
+            <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
+            <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
+            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : '-'}</td>
+            <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">Manage</button></td>
+          </tr>
+        `;
+    }).join('');
   },
 
   crtSaveDetails: async () => {
     const t = app._ticketsCache[app.currentTicketId];
     if (!t) return;
-    
+
     t.HotelName = app.getVal('crt_edit_hotelName');
     t.StateName = app.getVal('crt_edit_stateName');
     t.HRContactName = app.getVal('crt_edit_hrName');
@@ -394,7 +373,7 @@ const app = {
     t.Designation = app.getVal('crt_edit_designation');
     t.NumberOfPositions = app.getVal('crt_edit_numPositions');
     t.ExperienceRequired = app.getVal('crt_edit_experience');
-    t.Status = app.getVal('crt_statusOverride');
+    t.Status = app.getVal('crt_statusOverride') || t.Status;
     t.ClosureStatus = app.getVal('crt_closureAction');
 
     app.showLoading('Updating...');
@@ -407,7 +386,6 @@ const app = {
   },
 
   closeTicket: async () => {
-    // This handles the "Update Ticket Status" button in CRT view
     await app.crtSaveDetails();
   },
 
@@ -448,53 +426,26 @@ const app = {
     `).join('');
   },
 
-  adminDeleteUser: async (userId, username) => {
+  adminDeleteUser: async (rowid, username) => {
     if (!confirm(`Delete user ${username}?`)) return;
     app.showLoading("Deleting...");
-    const res = await app.api('admin-delete-user', { userId });
+    const res = await app.api('admin-delete-user', { rowid });
     app.hideLoading();
-    if (res.ok) app.loadAllUsers();
+    if (res.ok) {
+        alert("User deleted!");
+        app.loadAllUsers();
+    } else alert(res.error);
   },
 
-  adminDeleteTicket: async (rowId, ticketId) => {
+  adminDeleteTicket: async (rowid, ticketId) => {
     if (!confirm(`Permanently delete ticket ${ticketId}?`)) return;
     app.showLoading("Deleting...");
-    const res = await app.api('admin-clear-data', { rowId: rowId });
+    const res = await app.api('admin-delete-ticket', { rowid });
     app.hideLoading();
-    if (res.ok) app.loadAllTickets();
-    else alert(res.error);
-  },
-
-  loadCrtTickets: async () => {
-    const tbody = document.querySelector('#crt_ticketsTable tbody');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Loading...</td></tr>';
-    const res = await app.api('get-all-tickets');
-    if (!res.ok) return;
-
-    tbody.innerHTML = res.tickets.map(t => {
-        let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
-        let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
-        let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
-        
-        const remarks = fhFb.remarks || hrFb.remarks || '-';
-        const resumeCount = resumes.length;
-        
-        return `
-          <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
-            <td>${t.TicketID || t.ROWID || '-'}</td>
-            <td>${new Date(t.LoggedTimeandDate).toLocaleString() || '-'}</td>
-            <td>${t.HotelName || '-'}</td>
-            <td>${t.Designation || '-'} (${t.Department || '-'})</td>
-            <td>${t.NumberOfPositions || '0'}</td>
-            <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-            <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
-            <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
-            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : '-'}</td>
-            <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">Manage</button></td>
-          </tr>
-        `;
-    }).join('');
+    if (res.ok) {
+        alert("Ticket deleted!");
+        app.loadAllTickets();
+    } else alert(res.error);
   },
 
   adminClearDataRange: async () => {
@@ -511,7 +462,6 @@ const app = {
     }
   },
 
-  // ─── RESUME MANAGEMENT ───
   renderResumes: (pfx) => {
     const t = app._ticketsCache[app.currentTicketId];
     if (!t) return;
@@ -557,7 +507,6 @@ const app = {
             t.Resumes = JSON.stringify(resumes);
             app.renderResumes('crt');
             fileEl.value = '';
-            // Auto-save
             app.crtSaveDetails();
         } else {
             alert("Upload failed: " + (res.detail || res.error));
@@ -577,7 +526,6 @@ const app = {
     t.Resumes = JSON.stringify(resumes);
     app.renderResumes('crt');
     linkEl.value = '';
-    // Auto-save
     app.crtSaveDetails();
   },
 
@@ -590,7 +538,6 @@ const app = {
   },
 
   downloadFile: (fileId, fileName) => {
-    // Direct stream download is more reliable than temporary URLs
     const downloadUrl = `${API_BASE}?action=download-resume&fileId=${fileId}`;
     window.location.href = downloadUrl;
   }
