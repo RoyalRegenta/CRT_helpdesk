@@ -261,17 +261,27 @@ app.post('*', async (req, res) => {
             }
             if (!rowId) return res.json({ ok: false, error: 'System ROWID not found' });
             
-            // Filter out system fields and non-standard fields that might break updateRow
-            const updateData = { ROWID: rowId };
-            const allowedFields = [
-                'HotelName', 'StateName', 'HRContactName', 'HRContactNumber', 'HREmailID',
-                'Department', 'Designation', 'NumberOfPositions', 'ExperienceRequired',
-                'Status', 'HrFeedBack', 'FhFeedBack', 'Resumes', 'UpdatedTimeandDate'
-            ];
-            
-            allowedFields.forEach(f => {
-                if (data[f] !== undefined) {
-                    // Type casting for numeric fields to prevent schema mismatch
+            // 🚀 AUTOMATIC COLUMN DISCOVERY
+            // This ensures we never send an "Invalid Column" error again.
+            // We fetch a sample record to see exactly what columns exist in your table.
+            let columns = [];
+            try {
+                const sample = await catalystApp.zcql().executeZCQLQuery("SELECT * FROM CRT_Tickets LIMIT 1");
+                if (sample && sample.length > 0) {
+                    columns = Object.keys(sample[0].CRT_Tickets);
+                } else {
+                    // Fallback to basic fields if table is empty
+                    columns = ['ROWID', 'TicketID', 'Status', 'UpdatedTimeandDate'];
+                }
+            } catch (e) {
+                console.error('Column Discovery Error:', e);
+                columns = ['ROWID', 'TicketID', 'Status', 'UpdatedTimeandDate']; 
+            }
+
+            // Filter data to ONLY include columns that actually exist in your database
+            columns.forEach(f => {
+                if (data[f] !== undefined && f !== 'ROWID') {
+                    // Type casting for numeric fields
                     if (f === 'NumberOfPositions' || f === 'ExperienceRequired') {
                         updateData[f] = Number(data[f]) || 0;
                     } else {
