@@ -40,8 +40,8 @@ app.get('*', async (req, res) => {
                 const downloadUrl = await folder.getFileDownloadURL(fileId);
                 return res.redirect(downloadUrl);
             } catch (err) {
-                console.error('Download error:', err.message);
-                return res.status(404).send('File not found or access denied');
+                console.error('Download error:', err);
+                return res.status(404).send(`Download Error: ${err.message || 'File not found or access denied'}`);
             }
         }
 
