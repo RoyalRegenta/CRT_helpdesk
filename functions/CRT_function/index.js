@@ -36,9 +36,19 @@ app.get('*', async (req, res) => {
                 const catalystApp = catalyst.initialize(req);
                 const folder = catalystApp.filestore().folder(FOLDER_ID);
                 
-                // 🚀 STABLE DOWNLOAD: Redirecting is much faster than streaming in serverless
-                const downloadUrl = await folder.getFileDownloadURL(fileId);
-                return res.redirect(downloadUrl);
+                // Retrieve file details to set content type and name
+                const fileDetails = await folder.getFileDetails(fileId);
+                
+                // Get the actual file stream (this SDK uses getFileStream)
+                const fileStream = await folder.getFileStream(fileId);
+                
+                res.writeHead(200, {
+                    'Content-Type': fileDetails.content_type || 'application/octet-stream',
+                    'Content-Disposition': `attachment; filename="${fileDetails.file_name}"`
+                });
+
+                fileStream.pipe(res);
+                return;
             } catch (err) {
                 console.error('Download error:', err);
                 return res.status(404).send(`Download Error: ${err.message || 'File not found or access denied'}`);
