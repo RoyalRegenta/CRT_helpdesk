@@ -314,6 +314,7 @@ const app = {
     const detailsEl = document.getElementById(`${pfx}_dispDetails`);
     if (detailsEl) detailsEl.innerText = details;
 
+    const t = res.ticket;
     const updatedEl = document.getElementById(`${pfx}_dispUpdated`);
     if (updatedEl) updatedEl.innerText = `Updated: ${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : new Date(t.LoggedTimeandDate).toLocaleString()}`;
 
@@ -321,24 +322,15 @@ const app = {
       const posStrip = document.getElementById('hr_positionStrip');
       let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
       let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
-      const currentRemarks = t.Remarks || fhFb.remarks || hrFb.remarks || '-';
+      const currentRemarks = fhFb.remarks || hrFb.remarks || '-';
       
       if (posStrip) {
           posStrip.innerHTML = `
             <div class="strip-item"><strong>Hotel</strong> <span>${t.HotelName}</span></div>
             <div class="strip-item"><strong>Positions</strong> <span>${t.NumberOfPositions}</span></div>
+            <div class="strip-item"><strong>Remarks</strong> <span style="color:var(--text); font-weight:500;">${currentRemarks}</span></div>
           `;
       }
-      app.renderResumes('hr');
-    }
-
-    if (pfx === 'hr') {
-      const strip = document.getElementById('hr_positionStrip');
-      if (strip) strip.innerHTML = `
-        <div class="info-chip"><div class="info-chip-label">Hotel</div><div class="info-chip-val">${res.ticket.HotelName}</div></div>
-        <div class="info-chip"><div class="info-chip-label">Positions</div><div class="info-chip-val">${res.ticket.NumberOfPositions}</div></div>
-      `;
-      let hrFb = {}; try { hrFb = JSON.parse(res.ticket.HrFeedBack || '{}'); } catch(e){}
       app.setVal('hr_feedbackDecision', hrFb.decision || '');
       app.setVal('hr_feedbackRemarks', hrFb.remarks || '');
     }
