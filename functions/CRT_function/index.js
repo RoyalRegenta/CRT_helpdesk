@@ -86,10 +86,41 @@ app.post('*', async (req, res) => {
 
         if (action === 'get-ticket') {
             const tid = String(data.ticketId || '').trim();
+            if (!tid) return res.json({ ok: false, error: 'Ticket ID required' });
+            
+            console.log(`Searching for Ticket: [${tid}]`);
+
+            // Tier 1: Multi-column search
             const query = `SELECT * FROM CRT_Tickets WHERE TicketID = '${tid}' OR TicketID LIKE '%${tid}%' OR ROWID = '${tid}'`;
-            const results = await catalystApp.zcql().executeZCQLQuery(query);
+            let results = [];
+            try {
+                results = await catalystApp.zcql().executeZCQLQuery(query);
+            } catch (e) {
+                console.error("ZCQL Error:", e);
+            }
+
             if (results && results.length > 0) {
-                return res.json({ ok: true, ticket: results[0].CRT_Tickets });
+                const firstRow = results[0];
+                const tableName = Object.keys(firstRow)[0];
+                console.log(`Found via Tier 1 in table: ${tableName}`);
+                return res.json({ ok: true, ticket: firstRow[tableName] });
+            }
+
+            // Tier 2: Full Scan Fallback
+            console.log("Tier 1 failed. Performing full scan...");
+            const all = await catalystApp.zcql().executeZCQLQuery("SELECT * FROM CRT_Tickets");
+            if (all && all.length > 0) {
+                const tableName = Object.keys(all[0])[0];
+                const match = all.find(r => {
+                    const t = r[tableName];
+                    const dbId = String(t.TicketID || '').trim().toLowerCase();
+                    const sId = tid.toLowerCase();
+                    return dbId === sId || dbId.includes(sId) || String(t.ROWID) === tid;
+                });
+                if (match) {
+                    console.log("Found via Tier 2 scan.");
+                    return res.json({ ok: true, ticket: match[tableName] });
+                }
             }
             return res.json({ ok: false, error: 'Ticket not found' });
         }
