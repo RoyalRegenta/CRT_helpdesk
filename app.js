@@ -351,30 +351,6 @@ const app = {
     app.renderResumes(pfx, res.ticket.Resumes);
   },
 
-  renderResumes: (pfx, resumesStr) => {
-    const listEl = document.getElementById(`${pfx}_resumeList`);
-    if (!listEl) return;
-    let resumes = [];
-    try { resumes = JSON.parse(resumesStr || '[]'); } catch(e){}
-
-    if (!resumes.length) {
-      listEl.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">No resumes uploaded.</span>`;
-      return;
-    }
-
-    listEl.innerHTML = resumes.map((r, i) => {
-      const isFile = r.type === 'file';
-      const name = typeof r === 'string' ? `Link ${i+1}` : r.name;
-      const url = isFile ? `${API_BASE}download?fileId=${r.fileId}` : (r.url || r);
-      return `
-        <div class="resume-item">
-          <span style="font-size:13px;">${isFile ? '📄' : '🔗'} ${name}</span>
-          <a href="${url}" target="_blank" class="btn btn-secondary" style="padding:4px 12px; font-size:11px;">View</a>
-        </div>
-      `;
-    }).join('');
-  },
-
   // ─── ACTIONS ───
   saveFeedback: async (pfx) => {
     const decision = app.getVal(`${pfx}_feedbackDecision`);
@@ -415,9 +391,6 @@ const app = {
     if (res.ok) alert("Details updated!");
     else alert("Update failed.");
   },
-
-  addResumeFile: async () => {
-    const file = document.getElementById('crt_newResumeFile')?.files[0];
     if (!file) return alert("Select a file");
 
     app.showLoading('Uploading...');
@@ -506,18 +479,18 @@ const app = {
   loadAllUsers: async () => {
     const tbody = document.querySelector('#admin_usersTable tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Loading users...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading users...</td></tr>';
     
     const res = await app.api('admin-get-users');
     if (!res.ok) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">Failed to load users</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Failed to load users</td></tr>';
         return;
     }
 
     const filteredUsers = (res.users || []).filter(u => u.UserName !== 'it@royalorchidhotels.com');
 
     if (filteredUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No active users found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No active users found.</td></tr>';
         return;
     }
 
@@ -525,6 +498,8 @@ const app = {
       <tr>
         <td>${u.UserName || '-'}</td>
         <td>${new Date(u.CREATEDTIME).toLocaleDateString() || '-'}</td>
+        <td>${u.LoggedinTimeandDate ? new Date(u.LoggedinTimeandDate).toLocaleString() : 'Never'}</td>
+        <td>${u.LoggedoutTimeandDate ? new Date(u.LoggedoutTimeandDate).toLocaleString() : 'N/A'}</td>
         <td style="text-align:right;">
           <button class="btn btn-secondary" style="border-color:var(--urgent); color:var(--urgent); padding:4px 12px; font-size:11px;" onclick="app.adminDeleteUser('${u.ROWID}', '${u.UserName}')">Delete</button>
         </td>
@@ -598,6 +573,121 @@ const app = {
     } else {
         alert("Failed to delete data: " + (res.error || "Unknown Error"));
     }
+  },
+
+  // ─── RESUME MANAGEMENT ───
+  renderResumes: (pfx) => {
+    const t = app._ticketsCache[app.currentTicketId];
+    if (!t) return;
+    
+    let resumes = [];
+    try {
+        resumes = typeof t.Resumes === 'string' ? JSON.parse(t.Resumes || '[]') : (t.Resumes || []);
+    } catch(e) { resumes = []; }
+
+    const listEl = document.getElementById(`${pfx}_resumeList`);
+    if (!listEl) return;
+
+    if (resumes.length === 0) {
+        listEl.innerHTML = '<div style="color:var(--muted); font-size:12px;">No resumes uploaded yet.</div>';
+        return;
+    }
+
+    listEl.innerHTML = resumes.map((r, idx) => `
+      <div class="resume-item" style="display:flex; align-items:center; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:16px; margin-right:12px;">${r.type === 'link' ? '🔗' : '📄'}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:500;">${r.name}</div>
+          <div style="font-size:10px; color:var(--muted);">${r.date || ''}</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          ${r.type === 'file' ? 
+            `<button class="btn btn-secondary" style="padding:4px 10px; font-size:11px;" onclick="app.downloadFile('${r.fileId}', '${r.name}')">Download</button>` :
+            `<a href="${r.url}" target="_blank" class="btn btn-secondary" style="padding:4px 10px; font-size:11px; text-decoration:none;">Open Link</a>`
+          }
+          ${pfx === 'crt' ? `<button onclick="app.removeResume(${idx})" style="background:none; border:none; color:var(--urgent); cursor:pointer; font-size:16px;">&times;</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  },
+
+  addResumeFile: async () => {
+    const fileEl = document.getElementById('crt_newResumeFile');
+    if (!fileEl || !fileEl.files[0]) return alert("Please select a file first.");
+    
+    const file = fileEl.files[0];
+    const reader = new FileReader();
+    
+    app.showLoading("Uploading Resume...");
+    reader.onload = async (e) => {
+        const res = await app.api('upload-resume', {
+            fileName: file.name,
+            fileData: e.target.result
+        });
+        
+        if (res.ok) {
+            const t = app._ticketsCache[app.currentTicketId];
+            let resumes = [];
+            try { resumes = typeof t.Resumes === 'string' ? JSON.parse(t.Resumes || '[]') : (t.Resumes || []); } catch(e){}
+            
+            resumes.push({
+                type: 'file',
+                name: file.name,
+                fileId: res.fileId,
+                date: new Date().toLocaleDateString()
+            });
+            
+            t.Resumes = JSON.stringify(resumes);
+            app.renderResumes('crt');
+            fileEl.value = '';
+            alert("File uploaded successfully! Click 'Save Details' to finalize.");
+        } else {
+            alert("Upload failed: " + res.error);
+        }
+        app.hideLoading();
+    };
+    reader.readAsDataURL(file);
+  },
+
+  addResumeLink: () => {
+    const linkEl = document.getElementById('crt_newResumeLink');
+    const url = linkEl ? linkEl.value.trim() : "";
+    if (!url) return alert("Please enter a URL.");
+
+    const t = app._ticketsCache[app.currentTicketId];
+    let resumes = [];
+    try { resumes = typeof t.Resumes === 'string' ? JSON.parse(t.Resumes || '[]') : (t.Resumes || []); } catch(e){}
+    
+    resumes.push({
+        type: 'link',
+        name: 'External Link',
+        url: url,
+        date: new Date().toLocaleDateString()
+    });
+    
+    t.Resumes = JSON.stringify(resumes);
+    app.renderResumes('crt');
+    linkEl.value = '';
+  },
+
+  removeResume: (idx) => {
+    const t = app._ticketsCache[app.currentTicketId];
+    let resumes = [];
+    try { resumes = typeof t.Resumes === 'string' ? JSON.parse(t.Resumes || '[]') : (t.Resumes || []); } catch(e){}
+    resumes.splice(idx, 1);
+    t.Resumes = JSON.stringify(resumes);
+    app.renderResumes('crt');
+  },
+
+  downloadFile: async (fileId, fileName) => {
+    app.showLoading("Preparing Download...");
+    const res = await app.api('get-resume-url', { fileId });
+    app.hideLoading();
+    if (res.ok && res.url) {
+        window.open(res.url, '_blank');
+    } else {
+        alert("Failed to get download link.");
+    }
   }
 };
 
@@ -608,3 +698,4 @@ window.onload = () => {
   document.head.appendChild(fontLink);
   app.showView('role-selector');
 };
+
