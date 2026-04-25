@@ -245,7 +245,7 @@ const app = {
             <td>${t.Designation || '-'} (${t.Department || '-'})</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
             <td>${remarks}</td>
-            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
+            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : '-'}</td>
             <td>
               <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="event.stopPropagation(); app.searchTicket('admin')">View</button>
               <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px; border-color:var(--urgent); color:var(--urgent);" onclick="event.stopPropagation(); app.adminDeleteTicket('${t.ROWID}', '${t.TicketID}')">Delete</button>
@@ -340,6 +340,7 @@ const app = {
       app.setVal('crt_edit_designation', res.ticket.Designation);
       app.setVal('crt_edit_numPositions', res.ticket.NumberOfPositions);
       app.setVal('crt_edit_experience', res.ticket.ExperienceRequired);
+      app.setVal('crt_edit_remarks', res.ticket.Remarks || '');
       app.setVal('crt_statusOverride', res.ticket.Status);
       app.setVal('crt_closureAction', res.ticket.ClosureStatus || '');
     }
@@ -388,6 +389,7 @@ const app = {
     t.NumberOfPositions = app.getVal('crt_edit_numPositions');
     t.ExperienceRequired = app.getVal('crt_edit_experience');
     t.Status = app.getVal('crt_statusOverride');
+    t.Remarks = app.getVal('crt_edit_remarks');
     t.ClosureStatus = app.getVal('crt_closureAction');
 
     app.showLoading('Updating...');
@@ -476,14 +478,14 @@ const app = {
         return `
           <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
             <td>${t.TicketID || t.ROWID || '-'}</td>
-            <td>${new Date(t.LoggedTimeandDate).toLocaleDateString() || '-'}</td>
+            <td>${new Date(t.LoggedTimeandDate).toLocaleString() || '-'}</td>
             <td>${t.HotelName || '-'}</td>
             <td>${t.Designation || '-'} (${t.Department || '-'})</td>
             <td>${t.NumberOfPositions || '0'}</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-            <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
+            <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.Remarks || remarks}</td>
             <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
-            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleDateString() : '-'}</td>
+            <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : '-'}</td>
             <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">Manage</button></td>
           </tr>
         `;
