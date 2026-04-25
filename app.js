@@ -232,10 +232,9 @@ const app = {
         return;
     }
 
-    tbody.innerHTML = res.tickets.map(t => {
         let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
         let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
-        const remarks = t.Remarks || fhFb.remarks || hrFb.remarks || '-';
+        const remarks = fhFb.remarks || hrFb.remarks || '-';
         
         return `
           <tr style="cursor: pointer" onclick="app.setVal('admin_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('admin')">
@@ -328,7 +327,6 @@ const app = {
           posStrip.innerHTML = `
             <div class="strip-item"><strong>Hotel</strong> <span>${t.HotelName}</span></div>
             <div class="strip-item"><strong>Positions</strong> <span>${t.NumberOfPositions}</span></div>
-            <div class="strip-item"><strong>Remarks</strong> <span style="color:var(--text); font-weight:500;">${currentRemarks}</span></div>
           `;
       }
       app.renderResumes('hr');
@@ -356,7 +354,6 @@ const app = {
       app.setVal('crt_edit_designation', res.ticket.Designation);
       app.setVal('crt_edit_numPositions', res.ticket.NumberOfPositions);
       app.setVal('crt_edit_experience', res.ticket.ExperienceRequired);
-      app.setVal('crt_edit_remarks', res.ticket.Remarks || '');
       app.setVal('crt_statusOverride', res.ticket.Status);
       app.setVal('crt_closureAction', res.ticket.ClosureStatus || '');
     }
@@ -405,7 +402,6 @@ const app = {
     t.NumberOfPositions = app.getVal('crt_edit_numPositions');
     t.ExperienceRequired = app.getVal('crt_edit_experience');
     t.Status = app.getVal('crt_statusOverride');
-    t.Remarks = app.getVal('crt_edit_remarks');
     t.ClosureStatus = app.getVal('crt_closureAction');
 
     app.showLoading('Updating...');
@@ -499,7 +495,7 @@ const app = {
             <td>${t.Designation || '-'} (${t.Department || '-'})</td>
             <td>${t.NumberOfPositions || '0'}</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-            <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.Remarks || remarks}</td>
+            <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
             <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
             <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : '-'}</td>
             <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">Manage</button></td>
