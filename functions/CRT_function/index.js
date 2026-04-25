@@ -347,6 +347,25 @@ app.post('*', async (req, res) => {
             }
         }
 
+        else if (action === 'download-resume') {
+            const fileId = req.query.fileId || data.fileId;
+            if (!fileId) return res.status(400).send('File ID missing');
+            const FOLDER_ID = '36689000000042811';
+            try {
+                const folder = catalystApp.filestore().folder(FOLDER_ID);
+                const fileDetails = await folder.getFileDetails(fileId);
+                const fileStream = await folder.downloadFile(fileId);
+                
+                res.setHeader('Content-Type', fileDetails.content_type || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `attachment; filename="${fileDetails.file_name}"`);
+                fileStream.pipe(res);
+            } catch (e) {
+                console.error('Download Error:', e);
+                res.status(404).send('File not found');
+            }
+            return; // Exit early to avoid res.json below
+        }
+
         else if (action === 'get-resume-url') {
             if (!data.fileId) return res.json({ ok: false, error: 'File ID missing' });
             const FOLDER_ID = '36689000000042811';

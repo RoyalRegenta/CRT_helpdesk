@@ -582,12 +582,10 @@ const app = {
     app.renderResumes('crt');
   },
 
-  downloadFile: async (fileId, fileName) => {
-    app.showLoading("Preparing...");
-    const res = await app.api('get-resume-url', { fileId });
-    app.hideLoading();
-    if (res.ok && res.url) window.open(res.url, '_blank');
-    else alert("Failed to download.");
+  downloadFile: (fileId, fileName) => {
+    // Direct stream download is more reliable than temporary URLs
+    const downloadUrl = `${API_BASE}?action=download-resume&fileId=${fileId}`;
+    window.location.href = downloadUrl;
   }
 };
 
