@@ -194,7 +194,7 @@ app.post('*', async (req, res) => {
             if (!start || !end) return res.json({ ok: false, error: 'Start and end dates required' });
 
             const folder = catalystApp.filestore().folder('36689000000042811');
-            const files = await folder.getFiles();
+            const files = await folder.getAllFiles();
             let deletedCount = 0;
 
             for (const file of files) {
