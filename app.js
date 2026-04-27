@@ -481,7 +481,7 @@ window.app = {
         const resumeCount = resumes.length;
         
         return `
-          <tr style="cursor: pointer" onclick="app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
+          <tr style="cursor: pointer" onclick="app.switchTab('crt-team', 'manage-ticket'); app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
             <td>${t.TicketID || t.ROWID || '-'}</td>
             <td>${new Date(t.LoggedTimeandDate).toLocaleString() || '-'}</td>
             <td>${t.HotelName || '-'}</td>
