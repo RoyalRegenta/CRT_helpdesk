@@ -37,9 +37,7 @@
 body {
   background-color: var(--bg-color);
   background-image: 
-    radial-gradient(circle at 15% 50%, rgba(147, 51, 234, 0.1), transparent 30%),
-    radial-gradient(circle at 85% 30%, rgba(79, 70, 229, 0.1), transparent 30%),
-    linear-gradient(rgba(15, 7, 26, 0.85), rgba(15, 7, 26, 0.95)),
+    linear-gradient(rgba(15, 7, 26, 0.82), rgba(15, 7, 26, 0.92)),
     url('bg.png');
   background-size: cover;
   background-position: center;
