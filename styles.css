@@ -58,9 +58,9 @@ h1, h2, h3, .brand-name, .form-section-title {
 /* ─── HEADER ─── */
 .app-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 20px 40px;
+  padding: 30px 40px;
   background: rgba(11, 15, 25, 0.7);
   backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--surface-border);
@@ -72,9 +72,10 @@ h1, h2, h3, .brand-name, .form-section-title {
 .header-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
   cursor: pointer;
   transition: transform 0.2s ease;
+  text-align: left;
 }
 
 .header-brand:hover {
@@ -109,6 +110,8 @@ h1, h2, h3, .brand-name, .form-section-title {
   display: flex;
   align-items: center;
   gap: 16px;
+  position: absolute;
+  right: 40px;
 }
 
 .role-badge {
