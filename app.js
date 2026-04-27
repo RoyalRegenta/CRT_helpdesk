@@ -218,15 +218,15 @@ window.app = {
 
   loadAllTickets: async () => {
     const tbody = document.querySelector('#admin_ticketsTable tbody');
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">Loading tickets...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;">Loading tickets...</td></tr>';
     const res = await app.api('get-all-tickets');
     if (!res.ok) {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:red;">Failed to load tickets</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; color:red;">Failed to load tickets</td></tr>';
         return;
     }
 
     if (!res.tickets || res.tickets.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No tickets found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;">No tickets found.</td></tr>';
         return;
     }
 
@@ -248,6 +248,7 @@ window.app = {
             <td>${t.NumberOfPositions || '0'}</td>
             <td>${t.ExperienceRequired || '-'}</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
+            <td>${t.finaldecision || '-'}</td>
             <td>${t.Action || '-'}</td>
             <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
             <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
@@ -481,7 +482,7 @@ window.app = {
   loadCrtTickets: async () => {
     const tbody = document.querySelector('#crt_ticketsTable tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;">Loading...</td></tr>';
     const res = await app.api('get-all-tickets');
     if (!res.ok) return;
 
@@ -503,6 +504,7 @@ window.app = {
             <td>${t.NumberOfPositions || '0'}</td>
             <td>${t.ExperienceRequired || '-'}</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
+            <td>${t.finaldecision || '-'}</td>
             <td>${t.Action || '-'}</td>
             <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
             <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
