@@ -335,7 +335,7 @@ window.app = {
           `;
       }
       app.setVal('hr_feedbackDecision', hrFb.decision || '');
-      app.setVal('hr_feedbackRemarks', hrFb.remarks || '');
+      app.setVal('hr_feedbackRemarks', t.Remarks || hrFb.remarks || '');
     }
 
     if (pfx === 'crt') {
@@ -351,6 +351,14 @@ window.app = {
       app.setVal('crt_edit_experience', res.ticket.ExperienceRequired);
       app.setVal('crt_statusOverride', res.ticket.Status);
       app.setVal('crt_closureAction', res.ticket.Action || '');
+    }
+
+    if (pfx === 'fh') {
+      let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+      const currentDecision = t.finaldecision || fhFb.decision || '';
+      const currentRemarks = t.Remarks || fhFb.remarks || '';
+      app.setVal('fh_feedbackDecision', currentDecision);
+      app.setVal('fh_feedbackRemarks', currentRemarks);
     }
     
     app.renderResumes(pfx);
@@ -371,6 +379,7 @@ window.app = {
     }
     if (pfx === 'fh') {
         t.FhFeedBack = JSON.stringify({ decision, remarks });
+        t.finaldecision = decision;
         if (decision) t.Status = 'Closure Pending';
     }
 
