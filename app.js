@@ -514,17 +514,38 @@ window.app = {
     }).join('');
   },
 
-  adminClearDataRange: async () => {
-    const start = app.getVal('admin_maintenance_start');
-    const end = app.getVal('admin_maintenance_end');
-    if (!start || !end) return alert("Select dates.");
-    if (!confirm("Permanently delete data?")) return;
-    app.showLoading("Deleting...");
-    const res = await app.api('admin-clear-data', { startDate: start, endDate: end });
+  adminClearTickets: async () => {
+    const start = app.getVal('admin_maint_tickets_start');
+    const end = app.getVal('admin_maint_tickets_end');
+    if (!start || !end) return alert("Select date range for tickets.");
+    if (!confirm("Are you sure you want to PERMANENTLY delete these ticket records? This cannot be undone.")) return;
+    
+    app.showLoading("Deleting tickets...");
+    const res = await app.api('admin-clear-tickets', { startDate: start, endDate: end });
     app.hideLoading();
+    
     if (res.ok) {
-        alert(`Deleted ${res.deleted} records.`);
+        alert(`Successfully deleted ${res.deletedCount || 0} tickets.`);
         app.loadAllTickets();
+    } else {
+        alert("Failed to delete tickets: " + (res.error || "Unknown error"));
+    }
+  },
+
+  adminClearResumes: async () => {
+    const start = app.getVal('admin_maint_resumes_start');
+    const end = app.getVal('admin_maint_resumes_end');
+    if (!start || !end) return alert("Select date range for resumes.");
+    if (!confirm("Are you sure you want to PERMANENTLY delete physical resume files from storage? This cannot be undone.")) return;
+    
+    app.showLoading("Deleting files...");
+    const res = await app.api('admin-clear-resumes', { startDate: start, endDate: end });
+    app.hideLoading();
+    
+    if (res.ok) {
+        alert(`Successfully deleted ${res.deletedCount || 0} files from storage.`);
+    } else {
+        alert("Failed to delete files: " + (res.error || "Unknown error"));
     }
   },
 

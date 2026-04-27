@@ -172,8 +172,39 @@ app.post('*', async (req, res) => {
         }
 
         if (action === 'admin-delete-ticket') {
-            await datastore.table('36689000000042077').deleteRow(data.rowid);
+            await datastore.table('36689000000042077').deleteRow(data.rowId);
             return res.json({ ok: true });
+        }
+
+        if (action === 'admin-clear-tickets') {
+            const start = data.startDate;
+            const end = data.endDate;
+            if (!start || !end) return res.json({ ok: false, error: 'Start and end dates required' });
+            
+            // Format for ZCQL: YYYY-MM-DD HH:MM:SS
+            // Input date from <input type="date"> is YYYY-MM-DD
+            const query = `DELETE FROM CRT_Tickets WHERE CREATEDTIME >= '${start} 00:00:00' AND CREATEDTIME <= '${end} 23:59:59'`;
+            await catalystApp.zcql().executeZCQLQuery(query);
+            return res.json({ ok: true, deletedCount: 'Check Table' }); // ZCQL DELETE doesn't return count easily
+        }
+
+        if (action === 'admin-clear-resumes') {
+            const start = new Date(data.startDate + 'T00:00:00').getTime();
+            const end = new Date(data.endDate + 'T23:59:59').getTime();
+            if (!start || !end) return res.json({ ok: false, error: 'Start and end dates required' });
+
+            const folder = catalystApp.filestore().folder('36689000000042811');
+            const files = await folder.getFiles();
+            let deletedCount = 0;
+
+            for (const file of files) {
+                const createdTime = new Date(file.created_time).getTime();
+                if (createdTime >= start && createdTime <= end) {
+                    await folder.deleteFile(file.id);
+                    deletedCount++;
+                }
+            }
+            return res.json({ ok: true, deletedCount });
         }
 
         respond(res, 404, { ok: false, error: 'Invalid Action' });
