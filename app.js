@@ -610,6 +610,21 @@ window.app = {
     // Direct stream download is more reliable than temporary URLs
     const downloadUrl = `${API_BASE}?action=download-resume&fileId=${fileId}`;
     window.location.href = downloadUrl;
+  },
+
+  exportToExcel: (tableId, filename) => {
+    const table = document.getElementById(tableId);
+    if (!table) return alert("Table not found");
+    
+    // Create a new workbook
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Tickets" });
+    
+    // Generate filename with date
+    const dateStr = new Date().toISOString().split('T')[0];
+    const finalFilename = `${filename}_${dateStr}.xlsx`;
+    
+    // Download
+    XLSX.writeFile(wb, finalFilename);
   }
 };
 
