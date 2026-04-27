@@ -231,7 +231,9 @@ window.app = {
     }
 
     tbody.innerHTML = res.tickets.map(t => {
-        const remarks = t.Remarks || '-';
+        let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
+        let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+        const remarks = t.Remarks || fhFb.remarks || hrFb.remarks || '-';
         
         let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
         const resumeCount = resumes.length;
@@ -322,7 +324,8 @@ window.app = {
     if (pfx === 'hr') {
       const posStrip = document.getElementById('hr_positionStrip');
       let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
-      const currentRemarks = t.Remarks || '-';
+      let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+      const currentRemarks = t.Remarks || fhFb.remarks || hrFb.remarks || '-';
       
       if (posStrip) {
           posStrip.innerHTML = `
@@ -474,9 +477,11 @@ window.app = {
     if (!res.ok) return;
 
     tbody.innerHTML = res.tickets.map(t => {
+        let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
+        let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
         let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
         
-        const remarks = t.Remarks || '-';
+        const remarks = t.Remarks || fhFb.remarks || hrFb.remarks || '-';
         const resumeCount = resumes.length;
         
         return `
