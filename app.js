@@ -218,17 +218,15 @@ window.app = {
 
   loadAllTickets: async () => {
     const tbody = document.querySelector('#admin_ticketsTable tbody');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading tickets...</td></tr>';
-    
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;">Loading tickets...</td></tr>';
     const res = await app.api('get-all-tickets');
     if (!res.ok) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Failed to load tickets</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; color:red;">Failed to load tickets</td></tr>';
         return;
     }
 
     if (!res.tickets || res.tickets.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No tickets found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;">No tickets found.</td></tr>';
         return;
     }
 
@@ -237,14 +235,22 @@ window.app = {
         let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
         const remarks = fhFb.remarks || hrFb.remarks || '-';
         
+        let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+        const resumeCount = resumes.length;
+
         return `
           <tr style="cursor: pointer" onclick="app.setVal('admin_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('admin')">
             <td>${t.TicketID || t.ROWID || '-'}</td>
             <td>${new Date(t.LoggedTimeandDate).toLocaleString() || '-'}</td>
-            <td>${t.HotelName || '-'}</td>
-            <td>${t.Designation || '-'} (${t.Department || '-'})</td>
+            <td><div>${t.HotelName || '-'}</div><div style="font-size:11px;color:var(--muted);">${t.StateName || '-'}</div></td>
+            <td><div>${t.HRContactName || '-'}</div><div style="font-size:11px;color:var(--muted);">${t.HRContactNumber || '-'}</div><div style="font-size:11px;color:var(--muted);">${t.HREmailID || '-'}</div></td>
+            <td><div>${t.Designation || '-'}</div><div style="font-size:11px;color:var(--muted);">${t.Department || '-'}</div></td>
+            <td>${t.NumberOfPositions || '0'}</td>
+            <td>${t.ExperienceRequired || '-'}</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
+            <td>${t.ClosureStatus || '-'}</td>
+            <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
+            <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
             <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : '-'}</td>
             <td>
               <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="event.stopPropagation(); app.searchTicket('admin')">View</button>
@@ -467,9 +473,7 @@ window.app = {
 
   loadCrtTickets: async () => {
     const tbody = document.querySelector('#crt_ticketsTable tbody');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Loading...</td></tr>';
-    const res = await app.api('get-all-tickets');
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;">Loading...</td></tr>';
     if (!res.ok) return;
 
     tbody.innerHTML = res.tickets.map(t => {
@@ -484,10 +488,13 @@ window.app = {
           <tr style="cursor: pointer" onclick="app.switchTab('crt-team', 'manage-ticket'); app.setVal('crt_searchTicket', '${t.TicketID || t.ROWID}'); app.searchTicket('crt-team')">
             <td>${t.TicketID || t.ROWID || '-'}</td>
             <td>${new Date(t.LoggedTimeandDate).toLocaleString() || '-'}</td>
-            <td>${t.HotelName || '-'}</td>
-            <td>${t.Designation || '-'} (${t.Department || '-'})</td>
+            <td><div>${t.HotelName || '-'}</div><div style="font-size:11px;color:var(--muted);">${t.StateName || '-'}</div></td>
+            <td><div>${t.HRContactName || '-'}</div><div style="font-size:11px;color:var(--muted);">${t.HRContactNumber || '-'}</div><div style="font-size:11px;color:var(--muted);">${t.HREmailID || '-'}</div></td>
+            <td><div>${t.Designation || '-'}</div><div style="font-size:11px;color:var(--muted);">${t.Department || '-'}</div></td>
             <td>${t.NumberOfPositions || '0'}</td>
+            <td>${t.ExperienceRequired || '-'}</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
+            <td>${t.ClosureStatus || '-'}</td>
             <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
             <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
             <td>${t.UpdatedTimeandDate ? new Date(t.UpdatedTimeandDate).toLocaleString() : '-'}</td>
