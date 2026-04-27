@@ -210,6 +210,26 @@ h1, h2, h3, .brand-name, .form-section-title {
 }
 
 /* ─── ROLE SELECTOR ─── */
+.hero-banner {
+  width: 100%;
+  margin-bottom: 40px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--surface-border);
+  transition: transform 0.3s ease;
+}
+
+.hero-banner:hover {
+  transform: scale(1.005);
+}
+
+.hero-banner img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .role-selector {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
