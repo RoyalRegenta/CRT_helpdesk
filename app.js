@@ -248,7 +248,7 @@ window.app = {
             <td>${t.NumberOfPositions || '0'}</td>
             <td>${t.ExperienceRequired || '-'}</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-            <td>${t.finaldecision || '-'}</td>
+            <td>${t.FinalDecision || '-'}</td>
             <td>${t.Action || '-'}</td>
             <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
             <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
@@ -356,7 +356,7 @@ window.app = {
 
     if (pfx === 'fh') {
       let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
-      const currentDecision = t.finaldecision || fhFb.decision || '';
+      const currentDecision = t.FinalDecision || fhFb.decision || '';
       const currentRemarks = t.Remarks || fhFb.remarks || '';
       app.setVal('fh_feedbackDecision', currentDecision);
       app.setVal('fh_feedbackRemarks', currentRemarks);
@@ -380,7 +380,7 @@ window.app = {
     }
     if (pfx === 'fh') {
         t.FhFeedBack = JSON.stringify({ decision, remarks });
-        t.finaldecision = decision;
+        t.FinalDecision = decision;
         if (decision) t.Status = 'Closure Pending';
     }
 
@@ -504,7 +504,7 @@ window.app = {
             <td>${t.NumberOfPositions || '0'}</td>
             <td>${t.ExperienceRequired || '-'}</td>
             <td><span class="status-badge status-${(t.Status || 'Created').replace(/ /g, '-')}">${t.Status || 'Created'}</span></td>
-            <td>${t.finaldecision || '-'}</td>
+            <td>${t.FinalDecision || '-'}</td>
             <td>${t.Action || '-'}</td>
             <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${remarks}</td>
             <td>${resumeCount > 0 ? `📁 ${resumeCount}` : '-'}</td>
