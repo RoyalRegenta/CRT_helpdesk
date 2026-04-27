@@ -473,7 +473,9 @@ window.app = {
 
   loadCrtTickets: async () => {
     const tbody = document.querySelector('#crt_ticketsTable tbody');
+    if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;">Loading...</td></tr>';
+    const res = await app.api('get-all-tickets');
     if (!res.ok) return;
 
     tbody.innerHTML = res.tickets.map(t => {
