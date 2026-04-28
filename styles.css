@@ -58,7 +58,7 @@ h1, h2, h3, .brand-name, .form-section-title {
 /* ─── HEADER ─── */
 .app-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   padding: 30px 40px;
   background: rgba(11, 15, 25, 0.7);
@@ -110,8 +110,6 @@ h1, h2, h3, .brand-name, .form-section-title {
   display: flex;
   align-items: center;
   gap: 16px;
-  position: absolute;
-  right: 40px;
 }
 
 .role-badge {
