@@ -122,7 +122,7 @@ h1, h2, h3, .brand-name, .form-section-title {
 
 .dev-label {
   font-family: 'Inter', sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   color: var(--text-secondary);
   font-style: italic;
   letter-spacing: 0.5px;
@@ -130,7 +130,7 @@ h1, h2, h3, .brand-name, .form-section-title {
 
 .dev-name {
   font-family: 'Instrument Serif', serif;
-  font-size: 40px;
+  font-size: 48px;
   font-weight: normal;
   background: var(--accent-gradient);
   -webkit-background-clip: text;
@@ -142,7 +142,7 @@ h1, h2, h3, .brand-name, .form-section-title {
 
 .dev-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
