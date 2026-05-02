@@ -582,33 +582,45 @@ window.app = {
 
   addResumeFile: async () => {
     const fileEl = document.getElementById('crt_newResumeFile');
-    if (!fileEl || !fileEl.files[0]) return alert("Select a file.");
-    const file = fileEl.files[0];
-    const reader = new FileReader();
-    app.showLoading("Uploading...");
-    reader.onload = async (e) => {
-        const res = await app.api('upload-resume', { fileName: file.name, fileData: e.target.result });
-        if (res.ok) {
-            const t = app._ticketsCache[app.currentTicketId];
-            let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
-            resumes.push({ type: 'file', name: file.name, fileId: res.fileId, date: new Date().toLocaleDateString() });
-            t.Resumes = JSON.stringify(resumes);
-            app.renderResumes('crt');
-            fileEl.value = '';
-            // Auto-save
-            app.crtSaveDetails();
-        } else {
-            alert("Upload failed: " + (res.detail || res.error));
-        }
-        app.hideLoading();
-    };
-    reader.readAsDataURL(file);
+    if (!fileEl || !fileEl.files.length) return alert("Select at least one file.");
+    
+    const files = Array.from(fileEl.files);
+    app.showLoading(`Uploading ${files.length} files...`);
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (files.length > 1) app.showLoading(`Uploading (${i+1}/${files.length}): ${file.name}`);
+        
+        await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const res = await app.api('upload-resume', { fileName: file.name, fileData: e.target.result });
+                if (res.ok) {
+                    const t = app._ticketsCache[app.currentTicketId];
+                    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+                    resumes.push({ type: 'file', name: file.name, fileId: res.fileId, date: new Date().toLocaleDateString() });
+                    t.Resumes = JSON.stringify(resumes);
+                    app.renderResumes('crt');
+                } else {
+                    alert(`Failed to upload ${file.name}: ` + (res.detail || res.error));
+                }
+                resolve();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    fileEl.value = '';
+    // Auto-save once after all uploads
+    app.crtSaveDetails();
+    app.hideLoading();
   },
 
   addResumeLink: () => {
     const linkEl = document.getElementById('crt_newResumeLink');
-    const url = linkEl?.value.trim();
+    let url = linkEl?.value.trim();
     if (!url) return alert("Enter URL.");
+    if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
     const t = app._ticketsCache[app.currentTicketId];
     let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
     resumes.push({ type: 'link', name: 'External Link', url: url, date: new Date().toLocaleDateString() });
