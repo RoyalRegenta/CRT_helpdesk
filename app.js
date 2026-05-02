@@ -335,7 +335,6 @@ window.app = {
             <div class="strip-item"><strong>Remarks</strong> <span style="color:var(--text); font-weight:500;">${currentRemarks}</span></div>
           `;
       }
-      app.setVal('hr_feedbackDecision', hrFb.decision || '');
       app.setVal('hr_feedbackRemarks', t.Remarks || hrFb.remarks || '');
     }
 
@@ -356,9 +355,7 @@ window.app = {
 
     if (pfx === 'fh') {
       let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
-      const currentDecision = t.FinalDecision || fhFb.decision || '';
       const currentRemarks = t.Remarks || fhFb.remarks || '';
-      app.setVal('fh_feedbackDecision', currentDecision);
       app.setVal('fh_feedbackRemarks', currentRemarks);
     }
     
@@ -366,7 +363,6 @@ window.app = {
   },
 
   saveFeedback: async (pfx) => {
-    const decision = app.getVal(`${pfx}_feedbackDecision`);
     const remarks = app.getVal(`${pfx}_feedbackRemarks`);
     if (!remarks) return alert("Remarks are mandatory");
 
@@ -374,14 +370,16 @@ window.app = {
     if (!t) return;
 
     if (pfx === 'hr') {
-        t.HrFeedBack = JSON.stringify({ decision, remarks });
-        if (decision === 'Forward to Functional Head') t.Status = 'Pending Review';
-        else if (decision) t.Status = 'Interview Completed';
+        let hrFb = {}; try { hrFb = JSON.parse(t.HrFeedBack || '{}'); } catch(e){}
+        hrFb.remarks = remarks;
+        t.HrFeedBack = JSON.stringify(hrFb);
+        t.Status = 'Interview Completed';
     }
     if (pfx === 'fh') {
-        t.FhFeedBack = JSON.stringify({ decision, remarks });
-        t.FinalDecision = decision;
-        if (decision) t.Status = 'Closure Pending';
+        let fhFb = {}; try { fhFb = JSON.parse(t.FhFeedBack || '{}'); } catch(e){}
+        fhFb.remarks = remarks;
+        t.FhFeedBack = JSON.stringify(fhFb);
+        t.Status = 'Closure Pending';
     }
 
     t.Remarks = remarks;
