@@ -562,13 +562,28 @@ window.app = {
         return;
     }
 
+    const canEdit = (app.currentRole === 'unit-hr' || app.currentRole === 'functional-head');
+
     listEl.innerHTML = resumes.map((r, idx) => `
-      <div class="resume-item" style="display:flex; align-items:center; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.05);">
-        <div style="font-size:16px; margin-right:12px;">${r.type === 'link' ? '🔗' : '📄'}</div>
-        <div style="flex:1;">
-          <div style="font-size:13px; font-weight:500;">${r.name}</div>
+      <div class="resume-item" style="display:flex; align-items:center; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.05); gap: 10px;">
+        <div style="font-size:16px;">${r.type === 'link' ? '🔗' : '📄'}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.name}</div>
           <div style="font-size:10px; color:var(--muted);">${r.date || ''}</div>
         </div>
+        
+        <div style="width:130px;">
+          <select class="form-control" style="padding:4px 6px; font-size:11px; height:auto;" 
+                  onchange="app.saveResumeDecision(${idx}, this.value)" 
+                  ${canEdit ? '' : 'disabled'} title="Interview Decision">
+            <option value="">Pending Decision</option>
+            <option value="Selected" ${r.decision === 'Selected' ? 'selected' : ''}>Selected</option>
+            <option value="Rejected" ${r.decision === 'Rejected' ? 'selected' : ''}>Rejected</option>
+            <option value="Hold" ${r.decision === 'Hold' ? 'selected' : ''}>Hold</option>
+            <option value="Shortlisted" ${r.decision === 'Shortlisted' ? 'selected' : ''}>Shortlisted</option>
+          </select>
+        </div>
+
         <div style="display:flex; gap:8px;">
           ${r.type === 'file' ? 
             `<button class="btn btn-secondary" style="padding:4px 10px; font-size:11px;" onclick="app.downloadFile('${r.fileId}', '${r.name}')">Download</button>` :
@@ -578,6 +593,22 @@ window.app = {
         </div>
       </div>
     `).join('');
+  },
+
+  saveResumeDecision: async (idx, decision) => {
+    const t = app._ticketsCache[app.currentTicketId];
+    if (!t) return;
+    let resumes = []; try { resumes = JSON.parse(t.Resumes || '[]'); } catch(e){}
+    if (resumes[idx]) {
+        resumes[idx].decision = decision;
+        t.Resumes = JSON.stringify(resumes);
+        
+        app.showLoading('Saving decision...');
+        const res = await app.api('update-ticket', t);
+        app.hideLoading();
+        
+        if (!res.ok) alert('Failed to save decision: ' + (res.detail || res.error));
+    }
   },
 
   addResumeFile: async () => {
